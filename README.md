@@ -280,3 +280,58 @@ python example_pool.py --boost "What is 2+2?"
 | `/reset` | Clear chat session and start a fresh conversation |
 | `/help` | Display all available commands |
 | `exit` | Quit interactive shell |
+
+---
+
+## 🌐 Web Playground & VPS Deployment
+
+DeepSeek4Free includes a lightweight, zero-build FastAPI web application and OpenAI-compatible API server designed for immediate VPS deployment.
+
+### 🌟 Features:
+- 💬 **Interactive Playground**: Real-time SSE streaming with collapsible DeepSeek-R1 **Thinking Process** accordion.
+- 📊 **Pool Dashboard**: Live metrics (Total Accounts, Healthy, Cooldown, Requests OK/Err, Average Latency).
+- ➕ **Bulk 100-Account Import**: Paste 10, 50, or 100 tokens at once directly from the browser.
+- ⚡ **/boost Acceleration**: Live toggle for multi-account hedged racing.
+- 🧠 **/learn Benchmark**: 1-click live latency profiling across all accounts.
+- 🔗 **OpenAI-Compatible API**: `/v1/chat/completions` and `/v1/models` ready to connect to Cursor, Claude Code, Cline, LibreChat, and NextChat.
+
+### 🚀 Running on VPS:
+
+#### Option 1: Docker Compose (Recommended)
+```bash
+git clone https://github.com/dresar/deepseek4free.git
+cd deepseek4free
+docker compose up -d
+```
+Access at `http://<vps-ip>:8000`.
+
+#### Option 2: Direct Python Execution
+```bash
+# Linux VPS
+./start.sh
+
+# Or directly:
+pip install -r requirements.txt
+python web_server.py
+```
+
+### 🔌 Connecting via OpenAI SDK:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://<vps-ip>:8000/v1",
+    api_key="sk-deepseek4free" # Any string
+)
+
+response = client.chat.completions.create(
+    model="deepseek-chat", # or "deepseek-reasoner"
+    messages=[{"role": "user", "content": "Halo DeepSeek!"}],
+    stream=True
+)
+
+for chunk in response:
+    print(chunk.choices[0].delta.content or "", end="", flush=True)
+```
+

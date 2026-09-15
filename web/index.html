@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepSeek4Free - Web Playground & Multi-Account Router</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+            },
+            dark: {
+              900: '#0b0f17',
+              800: '#111827',
+              700: '#1f2937',
+              600: '#374151',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f17; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    .prose pre { background: #090d16 !important; border-radius: 6px; padding: 12px; border: 1px solid #1f2937; }
+    .prose code { color: #38bdf8; font-family: monospace; }
+  </style>
+</head>
+<body class="bg-dark-900 text-gray-100 flex flex-col h-screen overflow-hidden font-sans">
+
+  <!-- Header / Top Bar -->
+  <header class="h-14 border-b border-dark-700 bg-dark-800/90 backdrop-blur flex items-center justify-between px-5 shrink-0 z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
+        <i class="fa-solid fa-robot text-sm"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+          DeepSeek4Free
+          <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">VPS Edition</span>
+        </h1>
+        <p class="text-[11px] text-gray-400">Multi-Account Pool & Acceleration Router</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center gap-1 bg-dark-900/80 p-1 rounded-lg border border-dark-700">
+      <button onclick="switchTab('playground')" id="tab-playground" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 bg-dark-700 text-white shadow-sm">
+        <i class="fa-solid fa-comments text-sky-400"></i> Playground
+      </button>
+      <button onclick="switchTab('pool')" id="tab-pool" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-server text-emerald-400"></i> Pool Akun <span id="badge-total-tokens" class="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded-full">0</span>
+      </button>
+      <button onclick="switchTab('settings')" id="tab-settings" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-sliders text-purple-400"></i> Settings & API
+      </button>
+    </nav>
+
+    <!-- Header Quick Status -->
+    <div class="flex items-center gap-2">
+      <div id="quick-boost-indicator" class="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium">
+        <i class="fa-solid fa-bolt text-amber-400"></i> BOOST: <span id="hdr-boost-status">OFF</span>
+      </div>
+      <div id="quick-health-indicator" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="hdr-healthy-count">1/1 Sehat</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 overflow-hidden relative">
+
+    <!-- TAB 1: PLAYGROUND -->
+    <section id="view-playground" class="h-full flex flex-col justify-between max-w-5xl mx-auto px-4 py-3">
+      <!-- Chat Controls / Options Strip -->
+      <div class="flex items-center justify-between pb-2 border-b border-dark-700/60 text-xs text-gray-300 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+          <!-- Model Selection -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-gray-400 text-[11px]">Model:</span>
+            <select id="chat-model" class="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500">
+              <option value="deepseek-chat">deepseek-chat (Default)</option>
+              <option value="deepseek-reasoner">deepseek-reasoner (R1 Thinking)</option>
+            </select>
+          </div>
+
+          <!-- Thinking Toggle -->
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" id="chat-thinking" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
+            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-brain text-purple-400"></i> Thinking</span>
+          </label>
+
+          <!-- Boost Toggle -->
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" id="chat-boost" class="rounded bg-dark-700 border-dark-600 text-amber-500 focus:ring-0">
+            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> Boost Racing</span>
+          </label>
+
+          <!-- Web Search Toggle -->
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" id="chat-search" class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
+            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-globe text-sky-400"></i> Web Search</span>
+          </label>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="clearChat()" class="px-2 py-1 text-[11px] text-gray-400 hover:text-rose-400 transition flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> Bersihkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Stream Area -->
+      <div id="messages-container" class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+        <!-- Welcome Message -->
+        <div class="flex gap-3 max-w-3xl">
+          <div class="w-7 h-7 rounded-md bg-sky-600/30 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
+            <p class="font-semibold text-white mb-1">👋 Halo! Playground DeepSeek4Free siap digunakan.</p>
+            <p class="text-gray-300 text-xs">
+              Sistem ini berjalan di atas pool token multi-akun dengan auto-failover, load balancing, dan streaming realtime. Silakan ketik pertanyaan di bawah untuk mulai berinteraksi!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Box Area -->
+      <div class="pt-2 shrink-0">
+        <div class="relative bg-dark-800 border border-dark-600 rounded-xl shadow-lg focus-within:border-sky-500 transition">
+          <textarea id="prompt-input" rows="2" placeholder="Ketik pesan Anda... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)"
+            class="w-full bg-transparent px-4 py-3 text-sm text-white focus:outline-none resize-none placeholder-gray-500 pr-16"></textarea>
+          
+          <div class="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
+            <button id="btn-send" onclick="sendMessage()" class="w-8 h-8 rounded-lg bg-sky-600 hover:bg-sky-500 text-white flex items-center justify-center transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
+              <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+          </div>
+        </div>
+        <p class="text-center text-[10px] text-gray-500 mt-1.5">
+          DeepSeek Web API Reverse-Engineered • Multi-Account Rotation • Managed by Eka Syarif Maulana
+        </p>
+      </div>
+    </section>
+
+    <!-- TAB 2: POOL & AKUN (DASHBOARD) -->
+    <section id="view-pool" class="hidden h-full overflow-y-auto max-w-6xl mx-auto px-5 py-6 space-y-6">
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
+          <div class="flex items-center justify-between text-gray-400 text-xs mb-1">
+            <span>Total Akun</span>
+            <i class="fa-solid fa-users text-sky-400"></i>
+          </div>
+          <div id="stat-total" class="text-2xl font-bold text-white">0</div>
+          <p class="text-[11px] text-gray-500 mt-0.5">Terdaftar di pool</p>
+        </div>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
+          <div class="flex items-center justify-between text-emerald-400 text-xs mb-1">
+            <span>Akun Sehat</span>
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div id="stat-healthy" class="text-2xl font-bold text-emerald-400">0</div>
+          <p class="text-[11px] text-gray-500 mt-0.5">Siap melayani request</p>
+        </div>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
+          <div class="flex items-center justify-between text-amber-400 text-xs mb-1">
+            <span>Cooldown</span>
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+          <div id="stat-cooldown" class="text-2xl font-bold text-amber-400">0</div>
+          <p class="text-[11px] text-gray-500 mt-0.5">Istirahat rate limit</p>
+        </div>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
+          <div class="flex items-center justify-between text-purple-400 text-xs mb-1">
+            <span>Rata-Rata Latensi</span>
+            <i class="fa-solid fa-gauge-high"></i>
+          </div>
+          <div id="stat-latency" class="text-2xl font-bold text-purple-300">0 ms</div>
+          <p class="text-[11px] text-gray-500 mt-0.5">Benchmarked live</p>
+        </div>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="flex items-center justify-between flex-wrap gap-3 bg-dark-800 border border-dark-700 p-3 rounded-xl">
+        <div class="flex items-center gap-2">
+          <button onclick="openModalAddToken()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-plus"></i> Tambah Akun (Single/Bulk 100)
+          </button>
+          <button onclick="triggerLearn()" id="btn-learn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600/20 border border-purple-500/40 hover:bg-purple-600/30 text-purple-300 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-brain"></i> Jalankan /learn (Benchmark)
+          </button>
+          <button onclick="fetchPoolStatus()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-200 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs text-gray-400">
+          <span>Strategi: <b id="stat-strategy" class="text-white uppercase font-mono">round_robin</b></span>
+          <span class="text-dark-600">|</span>
+          <a href="/api/export" download="tokens.txt" class="text-sky-400 hover:underline flex items-center gap-1">
+            <i class="fa-solid fa-download"></i> Unduh tokens.txt
+          </a>
+        </div>
+      </div>
+
+      <!-- Table of Accounts -->
+      <div class="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-300">
+            <thead class="bg-dark-900/60 text-[11px] text-gray-400 uppercase tracking-wider border-b border-dark-700">
+              <tr>
+                <th class="py-3 px-4">#</th>
+                <th class="py-3 px-4">Nama / Masked Token</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Latensi</th>
+                <th class="py-3 px-4">Statistik Request</th>
+                <th class="py-3 px-4">Detail Error</th>
+                <th class="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tokens-table-body" class="divide-y divide-dark-700/60 font-mono text-[11px]">
+              <tr>
+                <td colspan="7" class="py-8 text-center text-gray-500">Memuat data pool akun...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS & OPENAI API -->
+    <section id="view-settings" class="hidden h-full overflow-y-auto max-w-4xl mx-auto px-5 py-6 space-y-6">
+      <!-- Strategy & Core Settings Card -->
+      <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
+          <i class="fa-solid fa-sliders text-sky-400"></i> Pengaturan Pool & Rotasi
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block text-gray-300 font-medium mb-1.5">Algoritma Rotasi Akun:</label>
+            <select id="setting-strategy" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+              <option value="round_robin">Round-Robin (Bergantian Rata)</option>
+              <option value="lru">Least-Recently-Used (Akun Paling Lama Menganggur)</option>
+            </select>
+            <p class="text-[11px] text-gray-500 mt-1">Mengatur cara router memilih akun berikutnya untuk setiap chat.</p>
+          </div>
+
+          <div>
+            <label class="block text-gray-300 font-medium mb-1.5">Default /boost Mode (Hedged Racing):</label>
+            <select id="setting-boost" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+              <option value="false">Nonaktif (Satu akun per request)</option>
+              <option value="true">Aktif (Balapan 2 akun tercepat)</option>
+            </select>
+            <p class="text-[11px] text-gray-500 mt-1">Memangkas latensi awal dengan meminta respon ke 2 akun paralel.</p>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="saveSettings()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow">
+            <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Pengaturan
+          </button>
+        </div>
+      </div>
+
+      <!-- OpenAI-Compatible API Integration Card -->
+      <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
+          <i class="fa-solid fa-network-wired text-emerald-400"></i> OpenAI-Compatible Endpoint (Untuk Cursor / Claude / LibreChat)
+        </h3>
+
+        <p class="text-xs text-gray-300 leading-relaxed">
+          Web server ini menyediakan endpoint standar <code class="text-emerald-400 font-mono">/v1/chat/completions</code> yang kompatibel dengan protokol OpenAI. Anda bisa memasang VPS ini ke Cursor, Claude Code, Cline, LibreChat, atau NextChat!
+        </p>
+
+        <div class="bg-dark-900 border border-dark-700 rounded-lg p-3 space-y-2 text-xs font-mono">
+          <div class="flex items-center justify-between text-gray-400">
+            <span>Base URL:</span>
+            <button onclick="copyToClipboard(window.location.origin + '/v1')" class="text-sky-400 hover:underline">Copy</button>
+          </div>
+          <div class="text-emerald-300 select-all" id="api-base-url">http://your-vps-ip:8000/v1</div>
+
+          <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
+            <span>Model Name:</span>
+          </div>
+          <div class="text-sky-300">deepseek-chat <span class="text-gray-500 font-sans text-[11px]">(atau <code class="text-purple-300">deepseek-reasoner</code> untuk R1)</span></div>
+
+          <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
+            <span>API Key:</span>
+          </div>
+          <div class="text-gray-300">sk-deepseek4free <span class="text-gray-500 font-sans text-[11px]">(bisa diisi karakter apa saja)</span></div>
+        </div>
+
+        <!-- Python Example Code -->
+        <div class="space-y-1.5">
+          <span class="text-xs font-semibold text-gray-300">Contoh Penggunaan Python (OpenAI SDK):</span>
+          <pre class="bg-dark-900 p-3 rounded-lg text-xs font-mono text-gray-300 overflow-x-auto border border-dark-700"><code>from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="sk-deepseek4free"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-chat",
+    messages=[{"role": "user", "content": "Halo DeepSeek!"}],
+    stream=True
+)
+
+for chunk in response:
+    print(chunk.choices[0].delta.content or "", end="", flush=True)</code></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: TAMBAH TOKEN (SINGLE / BULK) -->
+  <div id="modal-add-token" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-700 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-key text-sky-400"></i> Tambah Akun / Token ke Pool
+        </h3>
+        <button onclick="closeModalAddToken()" class="text-gray-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-gray-300">
+          Anda bisa memasukkan 1 token atau langsung paste <b>hingga 100 token sekaligus</b> (pisahkan dengan baris baru):
+        </p>
+        <textarea id="input-new-tokens" rows="6" placeholder="Paste userToken di sini...&#10;Contoh:&#10;pRrMRpbCbNjuFSqP9OUDUKOfBRMpTmnDB6aX8qPWIz6ZayfkOvbJzEpA9fkHYk8+&#10;tok_akun2_xxxxxxx&#10;tok_akun3_yyyyyyy"
+          class="w-full bg-dark-900 border border-dark-600 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-sky-500 resize-none"></textarea>
+        
+        <label class="flex items-center gap-2 text-gray-300">
+          <input type="checkbox" id="check-save-disk" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
+          <span>Simpan permanen ke file <code class="text-sky-400 font-mono">tokens.txt</code> di server</span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-dark-700 pt-3">
+        <button onclick="closeModalAddToken()" class="px-4 py-2 text-xs font-medium rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 transition">
+          Batal
+        </button>
+        <button onclick="submitNewTokens()" id="btn-submit-tokens" class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow">
+          Tambahkan ke Pool
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client JavaScript Logic -->
+  <script>
+    let currentSessionId = null;
+    let isGenerating = false;
+
+    // Set Base URL on load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('api-base-url').innerText = window.location.origin + '/v1';
+      fetchPoolStatus();
+      setInterval(fetchPoolStatus, 5000); // live polling pool status
+    });
+
+    // Tab Navigation
+    function switchTab(tab) {
+      ['playground', 'pool', 'settings'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          view.classList.remove('hidden');
+          btn.classList.add('bg-dark-700', 'text-white', 'shadow-sm');
+          btn.classList.remove('text-gray-400');
+        } else {
+          view.classList.add('hidden');
+          btn.classList.remove('bg-dark-700', 'text-white', 'shadow-sm');
+          btn.classList.add('text-gray-400');
+        }
+      });
+      if (tab === 'pool') fetchPoolStatus();
+    }
+
+    // Fetch Pool Status
+    async function fetchPoolStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Update header & metrics
+        document.getElementById('stat-total').innerText = data.total_tokens || 0;
+        document.getElementById('badge-total-tokens').innerText = data.total_tokens || 0;
+        document.getElementById('stat-healthy').innerText = data.healthy || 0;
+        document.getElementById('stat-cooldown').innerText = data.cooldown || 0;
+        document.getElementById('stat-strategy').innerText = data.strategy || 'round_robin';
+        document.getElementById('setting-strategy').value = data.strategy || 'round_robin';
+        document.getElementById('setting-boost').value = String(data.boost_enabled);
+        document.getElementById('hdr-boost-status').innerText = data.boost_enabled ? 'ON' : 'OFF';
+        document.getElementById('hdr-healthy-count').innerText = `${data.healthy}/${data.total_tokens} Sehat`;
+
+        // Calculate average latency
+        let totalLat = 0, countLat = 0;
+        (data.tokens || []).forEach(t => {
+          if (t.latency_ms > 0) { totalLat += t.latency_ms; countLat++; }
+        });
+        document.getElementById('stat-latency').innerText = countLat > 0 ? `${(totalLat / countLat).toFixed(0)} ms` : '-';
+
+        // Render Table
+        const tbody = document.getElementById('tokens-table-body');
+        if (!data.tokens || data.tokens.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada akun di pool. Klik tombol Tambah Akun.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.tokens.map((t, i) => {
+          let statusBadge = '';
+          if (t.status === 'healthy') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">HEALTHY</span>';
+          } else if (t.status === 'cooldown') {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">COOLDOWN (${t.cooldown_remaining.toFixed(0)}s)</span>`;
+          } else {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]">INVALID</span>';
+          }
+
+          const latencyDisplay = t.latency_ms > 0 ? `${t.latency_ms.toFixed(1)} ms` : '-';
+          const reqsDisplay = `OK: ${t.total_successes} | Err: ${t.total_errors}`;
+          const errDetail = t.last_error ? `<span class="text-rose-400 truncate max-w-xs block" title="${t.last_error}">${t.last_error}</span>` : '<span class="text-gray-600">-</span>';
+
+          return `
+            <tr class="hover:bg-dark-750 transition">
+              <td class="py-2.5 px-4 text-gray-500">${i + 1}</td>
+              <td class="py-2.5 px-4 font-bold text-white">${t.name}</td>
+              <td class="py-2.5 px-4">${statusBadge}</td>
+              <td class="py-2.5 px-4 text-purple-300">${latencyDisplay}</td>
+              <td class="py-2.5 px-4 text-gray-300">${reqsDisplay}</td>
+              <td class="py-2.5 px-4">${errDetail}</td>
+              <td class="py-2.5 px-4 text-right">
+                <button onclick="removeToken('${t.name}')" class="text-gray-500 hover:text-rose-400 transition" title="Hapus token">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Failed to fetch status:', err);
+      }
+    }
+
+    // Trigger /learn Benchmark
+    async function triggerLearn() {
+      const btn = document.getElementById('btn-learn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menjalankan /learn...';
+      try {
+        const res = await fetch('/api/learn', { method: 'POST' });
+        const result = await res.json();
+        alert(`✅ /learn Selesai!\n\nDiscovered: ${result.discovered}\nValid: ${result.valid}\nFastest: ${result.fastest || '-'}`);
+        fetchPoolStatus();
+      } catch (e) {
+        alert('Gagal menjalankan /learn: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-brain"></i> Jalankan /learn (Benchmark)';
+      }
+    }
+
+    // Modal Add Token
+    function openModalAddToken() {
+      document.getElementById('modal-add-token').classList.remove('hidden');
+      document.getElementById('input-new-tokens').focus();
+    }
+    function closeModalAddToken() {
+      document.getElementById('modal-add-token').classList.add('hidden');
+      document.getElementById('input-new-tokens').value = '';
+    }
+
+    async function submitNewTokens() {
+      const raw = document.getElementById('input-new-tokens').value.trim();
+      if (!raw) return;
+      const saveDisk = document.getElementById('check-save-disk').checked;
+
+      const btn = document.getElementById('btn-submit-tokens');
+      btn.disabled = true;
+      btn.innerText = 'Menyimpan...';
+
+      try {
+        const res = await fetch('/api/tokens/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokens_raw: raw, save_disk: saveDisk })
+        });
+        const data = await res.json();
+        alert(`✅ Berhasil menambahkan ${data.added} token ke pool!`);
+        closeModalAddToken();
+        fetchPoolStatus();
+      } catch (e) {
+        alert('Gagal menambah token: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Tambahkan ke Pool';
+      }
+    }
+
+    async function removeToken(tokenName) {
+      if (!confirm(`Hapus token ${tokenName} dari pool?`)) return;
+      try {
+        await fetch('/api/tokens/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: tokenName })
+        });
+        fetchPoolStatus();
+      } catch (e) {
+        alert('Gagal menghapus token: ' + e.message);
+      }
+    }
+
+    // Save Settings
+    async function saveSettings() {
+      const strategy = document.getElementById('setting-strategy').value;
+      const boost = document.getElementById('setting-boost').value === 'true';
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ strategy: strategy, boost_enabled: boost })
+        });
+        if (res.ok) {
+          alert('✅ Pengaturan pool berhasil disimpan!');
+          fetchPoolStatus();
+        }
+      } catch (e) {
+        alert('Gagal menyimpan: ' + e.message);
+      }
+    }
+
+    // Send Message / SSE Streaming Chat in Playground
+    async function sendMessage() {
+      if (isGenerating) return;
+      const input = document.getElementById('prompt-input');
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      input.value = '';
+      isGenerating = true;
+      document.getElementById('btn-send').disabled = true;
+
+      const container = document.getElementById('messages-container');
+
+      // Append User Bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'flex justify-end gap-3';
+      userBubble.innerHTML = `
+        <div class="bg-sky-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-2xl text-sm shadow leading-relaxed whitespace-pre-wrap">
+          ${escapeHtml(prompt)}
+        </div>
+      `;
+      container.appendChild(userBubble);
+
+      // Append Assistant Bubble (placeholder)
+      const assistantBubble = document.createElement('div');
+      assistantBubble.className = 'flex gap-3 max-w-3xl';
+      const msgId = 'msg-' + Date.now();
+
+      assistantBubble.innerHTML = `
+        <div class="w-7 h-7 rounded-md bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white text-xs shrink-0 mt-0.5 shadow">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="flex-1 bg-dark-800 border border-dark-700 rounded-xl p-4 text-sm shadow-sm space-y-3">
+          <!-- Thinking Collapsible Accordion -->
+          <div id="${msgId}-thinking-box" class="hidden rounded-lg border border-purple-500/30 bg-purple-950/20 overflow-hidden">
+            <button onclick="toggleThinking('${msgId}')" class="w-full px-3 py-1.5 flex items-center justify-between text-xs font-semibold text-purple-300 hover:bg-purple-900/30 transition">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-brain text-purple-400"></i> Thinking Process</span>
+              <i id="${msgId}-thinking-icon" class="fa-solid fa-chevron-down text-[10px]"></i>
+            </button>
+            <div id="${msgId}-thinking-content" class="p-3 text-xs text-gray-300 font-mono border-t border-purple-500/20 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto"></div>
+          </div>
+
+          <!-- Answer Content -->
+          <div id="${msgId}-text-content" class="prose prose-invert max-w-none text-sm text-gray-200 leading-relaxed">
+            <span class="inline-block animate-pulse text-sky-400 font-mono text-xs">Menunggu respon DeepSeek...</span>
+          </div>
+
+          <!-- Metadata Footer -->
+          <div id="${msgId}-footer" class="hidden pt-2 border-t border-dark-700/60 flex items-center justify-between text-[11px] text-gray-500">
+            <span id="${msgId}-account-tag" class="flex items-center gap-1 text-emerald-400">
+              <i class="fa-solid fa-shield-halved text-[10px]"></i> Dilayani oleh Pool
+            </span>
+            <button onclick="copyElementText('${msgId}-text-content')" class="hover:text-white transition flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> Salin
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(assistantBubble);
+      container.scrollTop = container.scrollHeight;
+
+      // Stream Request via SSE
+      const thinkingBox = document.getElementById(`${msgId}-thinking-box`);
+      const thinkingContent = document.getElementById(`${msgId}-thinking-content`);
+      const textContent = document.getElementById(`${msgId}-text-content`);
+      const footer = document.getElementById(`${msgId}-footer`);
+      const accountTag = document.getElementById(`${msgId}-account-tag`);
+
+      let fullText = '';
+      let fullThinking = '';
+
+      const model = document.getElementById('chat-model').value;
+      const thinkingEnabled = document.getElementById('chat-thinking').checked;
+      const boostEnabled = document.getElementById('chat-boost').checked;
+      const searchEnabled = document.getElementById('chat-search').checked;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: prompt,
+            model: model,
+            thinking_enabled: thinkingEnabled,
+            boost_enabled: boostEnabled,
+            search_enabled: searchEnabled,
+            session_id: currentSessionId
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ detail: 'HTTP Error ' + response.status }));
+          textContent.innerHTML = `<span class="text-rose-400 font-semibold">❌ Error: ${err.detail || 'Gagal memproses request'}</span>`;
+          isGenerating = false;
+          document.getElementById('btn-send').disabled = false;
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // keep last incomplete line
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') break;
+
+            try {
+              const payload = JSON.parse(dataStr);
+              if (payload.session_id) currentSessionId = payload.session_id;
+              if (payload.token_used) accountTag.innerHTML = `<i class="fa-solid fa-shield-halved text-[10px]"></i> Akun: <b>${payload.token_used}</b>`;
+
+              if (payload.type === 'thinking') {
+                thinkingBox.classList.remove('hidden');
+                fullThinking += payload.content;
+                thinkingContent.innerText = fullThinking;
+              } else if (payload.type === 'text') {
+                fullText += payload.content;
+                textContent.innerHTML = marked.parse(fullText);
+              }
+              container.scrollTop = container.scrollHeight;
+            } catch (e) {
+              // skip parse error
+            }
+          }
+        }
+
+        footer.classList.remove('hidden');
+        if (!fullText && fullThinking) {
+          textContent.innerHTML = marked.parse(fullThinking);
+        }
+
+      } catch (err) {
+        textContent.innerHTML = `<span class="text-rose-400">❌ Gagal terhubung ke server: ${err.message}</span>`;
+      } finally {
+        isGenerating = false;
+        document.getElementById('btn-send').disabled = false;
+      }
+    }
+
+    // Keyboard trigger on prompt input
+    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function toggleThinking(msgId) {
+      const el = document.getElementById(`${msgId}-thinking-content`);
+      const icon = document.getElementById(`${msgId}-thinking-icon`);
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        icon.className = 'fa-solid fa-chevron-down text-[10px]';
+      } else {
+        el.classList.add('hidden');
+        icon.className = 'fa-solid fa-chevron-right text-[10px]';
+      }
+    }
+
+    function clearChat() {
+      currentSessionId = null;
+      document.getElementById('messages-container').innerHTML = `
+        <div class="flex gap-3 max-w-3xl">
+          <div class="w-7 h-7 rounded-md bg-sky-600/30 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
+            <p class="font-semibold text-white mb-1">Percakapan baru telah dimulai.</p>
+            <p class="text-gray-300 text-xs">Silakan ketik pertanyaan di bawah.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('Tersalin ke clipboard!');
+    }
+
+    function copyElementText(elId) {
+      const el = document.getElementById(elId);
+      if (el) {
+        navigator.clipboard.writeText(el.innerText);
+        alert('Teks respon tersalin!');
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

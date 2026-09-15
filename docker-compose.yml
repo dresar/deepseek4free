@@ -1,0 +1,18 @@
+services:
+  deepseek4free:
+    build: .
+    container_name: deepseek4free-router
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./tokens.txt:/app/tokens.txt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
