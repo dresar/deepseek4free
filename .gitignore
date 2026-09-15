@@ -12,6 +12,15 @@ dsk/cookies.json
 .env
 tokens.txt
 tokens.json
+# Node & Next.js
+node_modules/
+.next/
+playground-next/node_modules/
+playground-next/.next/
+
+# Aider chat history & temp prompts
+.aider*
+prompt_*.txt
 
 
 # Distribution / packaging
