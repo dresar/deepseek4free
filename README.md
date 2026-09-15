@@ -335,3 +335,31 @@ for chunk in response:
     print(chunk.choices[0].delta.content or "", end="", flush=True)
 ```
 
+---
+
+## 🤖 Aider Autonomous Coding (100% AI Control)
+
+DeepSeek4Free fully integrates with [Aider](https://aider.chat) for autonomous coding, refactoring, and automated test writing powered by DeepSeek-R1 reasoning:
+
+```bash
+# 1-Click Launch Aider with DeepSeek Reasoning
+./run_aider.bat
+```
+
+Or manually:
+```bash
+aider --set-env OPENAI_API_BASE="http://localhost:8000/v1" \
+      --set-env OPENAI_BASE_URL="http://localhost:8000/v1" \
+      --set-env OPENAI_API_KEY="sk-deepseek4free" \
+      --model "openai/deepseek-reasoner"
+```
+
+### 🧪 Autonomous Coding Verification
+DeepSeek-R1 via Aider autonomously created and unit-tested:
+- `robot_controller.py`: Object-oriented robot controller with battery tracking, kinematics, boundary checks, and telemetry.
+- `test_robot_controller.py`: 34 comprehensive unit tests verifying 100% test coverage and zero regressions.
+Run tests with:
+```bash
+python -m unittest test_robot_controller.py -v
+```
+
