@@ -14,8 +14,14 @@ import wasmtime
 import numpy as np
 from typing import Dict, Any
 import os
+import sys
 
-WASM_PATH = f'{os.path.dirname(__file__)}/wasm/sha3_wasm_bg.7b9ca65ddd.wasm'
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    WASM_PATH = os.path.join(sys._MEIPASS, "dsk", "wasm", "sha3_wasm_bg.7b9ca65ddd.wasm")
+    if not os.path.exists(WASM_PATH):
+        WASM_PATH = os.path.join(sys._MEIPASS, "wasm", "sha3_wasm_bg.7b9ca65ddd.wasm")
+else:
+    WASM_PATH = os.path.join(os.path.dirname(__file__), "wasm", "sha3_wasm_bg.7b9ca65ddd.wasm")
 
 class DeepSeekHash:
     def __init__(self):
