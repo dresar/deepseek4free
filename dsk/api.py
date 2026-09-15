@@ -2,7 +2,11 @@ from curl_cffi import requests
 from typing import Optional, Dict, Any, Generator, Literal
 import json
 from .pow import DeepSeekPOW
-import pkg_resources
+try:
+    from importlib.metadata import version as get_pkg_version, PackageNotFoundError
+except ImportError:
+    get_pkg_version = None
+    PackageNotFoundError = Exception
 import sys
 from pathlib import Path
 import subprocess
@@ -44,14 +48,15 @@ class DeepSeekAPI:
         if not auth_token or not isinstance(auth_token, str):
             raise AuthenticationError("Invalid auth token provided")
 
-        try:
-            curl_cffi_version = pkg_resources.get_distribution('curl-cffi').version
-            if curl_cffi_version != '0.8.1b9':
-                print("\033[93mWarning: DeepSeek API requires curl-cffi version 0.8.1b9", file=sys.stderr)
-                print("Please install the correct version using: pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
-        except pkg_resources.DistributionNotFound:
-            print("\033[93mWarning: curl-cffi not found. Please install version 0.8.1b9:", file=sys.stderr)
-            print("pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
+        if get_pkg_version:
+            try:
+                curl_cffi_version = get_pkg_version('curl-cffi')
+                if curl_cffi_version != '0.8.1b9':
+                    print("\033[93mWarning: DeepSeek API requires curl-cffi version 0.8.1b9", file=sys.stderr)
+                    print("Please install the correct version using: pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
+            except PackageNotFoundError:
+                print("\033[93mWarning: curl-cffi not found. Please install version 0.8.1b9:", file=sys.stderr)
+                print("pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
 
         self.auth_token = auth_token
         self.pow_solver = DeepSeekPOW()
@@ -246,41 +251,58 @@ class DeepSeekAPI:
                 else:
                     raise APIError(f"API request failed: {error_text}", response.status_code)
 
+            current_type = 'text'
             for chunk in response.iter_lines():
+                if not chunk:
+                    continue
+                if chunk.startswith(b'event: finish') or chunk.startswith(b'event: close'):
+                    yield {'content': '', 'type': current_type, 'finish_reason': 'stop'}
+                    break
                 try:
-                    parsed = self._parse_chunk(chunk)
-                    if parsed:
-                        yield parsed
-                        if parsed.get('finish_reason') == 'stop':
+                    if chunk.startswith(b'data: '):
+                        raw_json = chunk[6:].strip()
+                        if not raw_json or raw_json == b'{}':
+                            continue
+                        data = json.loads(raw_json)
+
+                        # 1. Support OpenAI-compatible format if present
+                        if 'choices' in data and data['choices']:
+                            choice = data['choices'][0]
+                            if 'delta' in choice:
+                                delta = choice['delta']
+                                yield {
+                                    'content': delta.get('content', ''),
+                                    'type': delta.get('type', 'text'),
+                                    'finish_reason': choice.get('finish_reason')
+                                }
+                                if choice.get('finish_reason') == 'stop':
+                                    break
+                            continue
+
+                        # 2. Support native DeepSeek Web API format
+                        path = data.get('p')
+                        if path == 'response/thinking_content':
+                            current_type = 'thinking'
+                        elif path == 'response/content':
+                            current_type = 'text'
+
+                        if path == 'response/status' and data.get('v') == 'FINISHED':
+                            yield {'content': '', 'type': current_type, 'finish_reason': 'stop'}
                             break
+
+                        val = data.get('v')
+                        if isinstance(val, str) and val:
+                            yield {
+                                'content': val,
+                                'type': current_type,
+                                'finish_reason': None
+                            }
+
+                except json.JSONDecodeError:
+                    continue
                 except Exception as e:
                     raise APIError(f"Error parsing response chunk: {str(e)}")
 
         except requests.exceptions.RequestException as e:
             raise NetworkError(f"Network error occurred during streaming: {str(e)}")
 
-    def _parse_chunk(self, chunk: bytes) -> Optional[Dict[str, Any]]:
-        """Parse a SSE chunk from the API response"""
-        if not chunk:
-            return None
-
-        try:
-            if chunk.startswith(b'data: '):
-                data = json.loads(chunk[6:])
-
-                if 'choices' in data and data['choices']:
-                    choice = data['choices'][0]
-                    if 'delta' in choice:
-                        delta = choice['delta']
-
-                        return {
-                            'content': delta.get('content', ''),
-                            'type': delta.get('type', ''),
-                            'finish_reason': choice.get('finish_reason')
-                        }
-        except json.JSONDecodeError:
-            raise APIError("Invalid JSON in response chunk")
-        except Exception as e:
-            raise APIError(f"Error parsing chunk: {str(e)}")
-
-        return None

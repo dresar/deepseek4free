@@ -206,3 +206,77 @@ except NetworkError:
     print("Network error occurred. Check your internet connection.")
 except APIError as e:
     print(f"API error occurred: {str(e)}")
+```
+
+## 🚀 Multi-Account Token Rotation & Acceleration (`DeepSeekPool`)
+
+For high-throughput applications, scaling across 100+ accounts, and eliminating rate limits (HTTP 429), use `DeepSeekPool`.
+
+### Features:
+- 🔄 **Load Balancing**: Round-Robin or Least-Recently-Used (LRU) strategies with fair monotonic distribution.
+- 🛡️ **Smart Failover**: Automatically catches `RateLimitError` (HTTP 429), applies temporary cooldown (e.g. 5 minutes), and retries immediately with the next healthy account.
+- 💬 **Session Affinity & Isolation**: Each token maintains its own independent session IDs, preserving conversation memory per account without cross-token contamination.
+- ⚡ **/boost Acceleration**: Multi-account hedged racing queries top accounts simultaneously and streams whichever responds fastest, cutting latency by 50%+. Also includes `boost_batch` for parallel batch processing across accounts.
+- 🧠 **/learn Auto-Discovery**: Automatically discovers and harvests tokens from `.env`, `tokens.txt`, `tokens.json`, and environment variables; benchmarks latency and calibrates pool health.
+- 📁 **Flexible Token Loading**: Loads from `tokens.txt` (supports inline `#` comments), `tokens.json`, or `.env` fallback.
+
+### Quickstart Example:
+
+```python
+from dsk import DeepSeekPool, PoolStrategy
+
+# Initializes automatically from tokens.txt, tokens.json, or .env
+pool = DeepSeekPool(
+    strategy=PoolStrategy.ROUND_ROBIN,
+    cooldown_seconds=300.0,
+    max_retries=3
+)
+
+# 1. Print pool health and account statuses
+pool.print_status()
+
+# 2. Chat completion with automatic rotation and failover
+for chunk in pool.chat_completion("Explain distributed token rotation"):
+    if chunk['type'] == 'text':
+        print(chunk['content'], end='', flush=True)
+
+# 3. /boost Mode: Multi-account hedged racing for lowest latency
+for chunk in pool.boost_completion("Explain quantum computing"):
+    if chunk['type'] == 'text':
+        print(chunk['content'], end='', flush=True)
+
+# 4. /learn Mode: Auto-discover tokens and benchmark latency
+report = pool.learn(auto_add=True, benchmark=True)
+print(f"Discovered: {report['discovered_count']} | Average latency: {report['average_latency_ms']}ms")
+```
+
+### Interactive CLI & Runner (`example_pool.py`):
+
+Launch the interactive chat shell with built-in slash commands:
+```bash
+# Start interactive chat REPL
+python example_pool.py
+
+# Check pool status and health table
+python example_pool.py --status
+
+# Auto-discover and benchmark tokens
+python example_pool.py --learn
+
+# Run a boosted prompt directly
+python example_pool.py --boost "What is 2+2?"
+```
+
+#### Interactive Slash Commands:
+| Command | Description |
+|---|---|
+| `/boost [prompt]` | Toggle boost mode ON/OFF, or execute a single query with multi-account acceleration |
+| `/learn` | Auto-discover tokens from files/.env, benchmark latency, and optimize pool |
+| `/status` | View live visual health dashboard, request counts, and account response times |
+| `/tokens` | List registered accounts with masked identifiers and performance metrics |
+| `/add <token>` | Dynamically register a new account token into the active pool |
+| `/remove <token>` | Remove an account token from the pool |
+| `/strategy <rr\|lru>` | Switch between Round-Robin and Least-Recently-Used balancing |
+| `/reset` | Clear chat session and start a fresh conversation |
+| `/help` | Display all available commands |
+| `exit` | Quit interactive shell |

@@ -1,0 +1,13 @@
+# ==============================================================================
+# DeepSeek Auth Tokens List (One token per line)
+# ==============================================================================
+# How to get your DeepSeek token:
+# 1. Open Chrome and log into https://chat.deepseek.com
+# 2. Or run: .venv\Scripts\python.exe login_and_get_token.py
+# 3. Or copy localStorage.userToken from browser DevTools
+#
+# Paste your tokens below (lines starting with # are ignored):
+
+pRrMRpbCbNjuFSqP9OUDUKOfBRMpTmnDB6aX8qPWIz6ZayfkOvbJzEpA9fkHYk8+
+# e.g. token_2_here_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# e.g. token_3_here_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

@@ -13,7 +13,7 @@ def print_response(chunks: Generator[Dict[str, Any], None, None]) -> None:
     try:
         for chunk in chunks:
             if chunk['type'] == 'thinking':
-                if chunk['content'] and chunk['content'] not in thinking_lines:
+                if chunk['content']:
                     thinking_lines.append(chunk['content'])
             elif chunk['type'] == 'text':
                 text_content.append(chunk['content'])
@@ -23,8 +23,7 @@ def print_response(chunks: Generator[Dict[str, Any], None, None]) -> None:
 
     if thinking_lines:
         print("\n🤔 Thinking:")
-        for line in thinking_lines:
-            print(f"  • {line}")
+        print(''.join(thinking_lines))
         print()
 
     print("💬 Response:")
@@ -77,13 +76,13 @@ def main():
         #     search_enabled=True
         # )
 
-        # # Example 2: With thinking only
-        # run_chat_example(
-        #     api,
-        #     "Example 2: Python explanation (with thinking)",
-        #     "Explain how Python's context managers (with statement) work",
-        #     thinking_enabled=True
-        # )
+        # Example 2: With thinking only
+        run_chat_example(
+            api,
+            "Example 2: Python explanation (with thinking)",
+            "Explain how Python's context managers (with statement) work in 2 short sentences.",
+            thinking_enabled=True
+        )
 
         # Example 3: Without thinking
         run_chat_example(

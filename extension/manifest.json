@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "DeepSeek Token Extractor",
+  "version": "1.0.0",
+  "description": "Ambil DeepSeek userToken secara otomatis 1-klik",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["https://chat.deepseek.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DeepSeek Token Extractor"
+  }
+}
