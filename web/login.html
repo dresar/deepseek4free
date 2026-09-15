@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — DeepSeek4Free</title>
+  <link rel="stylesheet" href="/web/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: auto;
+      background: var(--bg-base);
+    }
+
+    .login-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(56, 189, 248, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 70%, rgba(129, 140, 248, 0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 380px;
+      margin: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(56,189,248,0.04);
+    }
+
+    .login-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--grad-sky);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      margin: 0 auto 20px;
+      box-shadow: var(--shadow-glow-sky);
+    }
+
+    .login-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .login-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .login-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .login-input-wrap {
+      position: relative;
+    }
+
+    .login-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 40px 11px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .login-input:focus {
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.06);
+    }
+
+    .login-input::placeholder { color: var(--text-muted); }
+
+    .login-input-icon {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .btn-toggle-pass {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      transition: color 0.18s;
+    }
+
+    .btn-toggle-pass:hover { color: var(--text-secondary); }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--grad-sky);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+      margin-top: 4px;
+    }
+
+    .btn-login:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .login-error {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--accent-rose-dim);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      font-size: 12px;
+      color: var(--accent-rose);
+    }
+
+    .login-footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .login-footer span {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-bg"></div>
+
+<div class="login-card">
+  <div class="login-logo"><i class="fa-solid fa-robot"></i></div>
+  <h1 class="login-title">DeepSeek4Free</h1>
+  <p class="login-sub">Multi-Account Pool Router</p>
+
+  <div id="login-error" class="login-error">
+    <i class="fa-solid fa-circle-xmark"></i>
+    <span id="error-text">Kredensial tidak valid</span>
+  </div>
+
+  <form class="login-form" onsubmit="handleLogin(event)">
+    <div class="login-field">
+      <label class="login-field-label">Username</label>
+      <div class="login-input-wrap">
+        <input type="text" id="input-username" class="login-input" placeholder="Username" autocomplete="username" required>
+        <i class="login-input-icon fa-solid fa-user"></i>
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label class="login-field-label">Password</label>
+      <div class="login-input-wrap">
+        <input type="password" id="input-password" class="login-input" placeholder="Password" autocomplete="current-password" required>
+        <button type="button" class="btn-toggle-pass" id="btn-toggle-pass" onclick="togglePassVisibility()">
+          <i class="fa-solid fa-eye" id="pass-eye-icon"></i>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" id="btn-login" class="btn-login">
+      <span id="login-btn-text">Masuk</span>
+    </button>
+  </form>
+
+  <div class="login-footer">
+    Default: <span>admin</span> / <span>admin</span>
+  </div>
+</div>
+
+<script>
+  (async function redirectIfAuthed() {
+    const token = localStorage.getItem('dsk4f_token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) window.location.href = '/';
+    } catch {}
+  })();
+
+  function togglePassVisibility() {
+    const input = document.getElementById('input-password');
+    const icon = document.getElementById('pass-eye-icon');
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    icon.className = isHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('input-username').value.trim();
+    const password = document.getElementById('input-password').value;
+    const btn = document.getElementById('btn-login');
+    const btnText = document.getElementById('login-btn-text');
+    const errorEl = document.getElementById('login-error');
+    const errorText = document.getElementById('error-text');
+
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btnText.innerHTML = '<i class="fa-solid fa-spinner spin" style="animation:spin 1s linear infinite"></i>';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Login gagal' }));
+        throw new Error(err.detail || 'Login gagal');
+      }
+      const data = await res.json();
+      localStorage.setItem('dsk4f_token', data.token);
+      localStorage.setItem('dsk4f_user', data.username);
+      window.location.href = '/';
+    } catch (err) {
+      errorText.textContent = err.message;
+      errorEl.style.display = 'flex';
+      btn.disabled = false;
+      btnText.textContent = 'Masuk';
+    }
+  }
+</script>
+
+</body>
+</html>

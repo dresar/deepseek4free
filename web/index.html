@@ -1,845 +1,338 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeepSeek4Free - Web Playground &amp; Multi-Account Router</title>
-  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <title>DeepSeek4Free</title>
+  <meta name="description" content="Multi-Account Token Pool & OpenAI-Compatible API Router">
+  <link rel="stylesheet" href="/web/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0f9ff',
-              500: '#0284c7',
-              600: '#0369a1',
-              700: '#075985',
-            },
-            dark: {
-              950: '#070a0f',
-              900: '#0b0f17',
-              800: '#111827',
-              750: '#182234',
-              700: '#1f2937',
-              600: '#374151',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0b0f17; }
-    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-    
-    .ai-rendered-content {
-      color: #e2e8f0;
-      line-height: 1.65;
-      font-size: 0.875rem;
-    }
-    .ai-rendered-content strong, .ai-rendered-content b {
-      color: #38bdf8;
-      font-weight: 700;
-    }
-    .ai-rendered-content h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-top: 1rem;
-      margin-bottom: 0.5rem;
-      border-bottom: 1px solid #1f2937;
-      padding-bottom: 0.25rem;
-    }
-    .ai-rendered-content h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-top: 0.85rem;
-      margin-bottom: 0.4rem;
-    }
-    .ai-rendered-content h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #f1f5f9;
-      margin-top: 0.75rem;
-      margin-bottom: 0.35rem;
-    }
-    .ai-rendered-content ul {
-      list-style-type: disc;
-      padding-left: 1.25rem;
-      margin-top: 0.4rem;
-      margin-bottom: 0.6rem;
-    }
-    .ai-rendered-content ol {
-      list-style-type: decimal;
-      padding-left: 1.25rem;
-      margin-top: 0.4rem;
-      margin-bottom: 0.6rem;
-    }
-    .ai-rendered-content li {
-      margin-bottom: 0.25rem;
-    }
-    .ai-rendered-content pre {
-      background: #070a0f !important;
-      border: 1px solid #1f2937;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin: 8px 0;
-      overflow-x: auto;
-    }
-    .ai-rendered-content code {
-      background: #111827;
-      color: #38bdf8;
-      padding: 2px 5px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 0.82em;
-    }
-    .ai-rendered-content pre code {
-      background: transparent;
-      padding: 0;
-    }
-    .ai-rendered-content blockquote {
-      border-left: 3px solid #0284c7;
-      padding-left: 10px;
-      color: #94a3b8;
-      margin: 8px 0;
-      font-style: italic;
-    }
-  </style>
 </head>
-<body class="bg-dark-900 text-gray-100 flex flex-col h-screen overflow-hidden font-sans">
+<body>
 
-  <header class="h-14 border-b border-dark-700 bg-dark-800/90 backdrop-blur flex items-center justify-between px-5 shrink-0 z-20">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
-        <i class="fa-solid fa-robot text-sm"></i>
-      </div>
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon"><i class="fa-solid fa-robot"></i></div>
       <div>
-        <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-          DeepSeek4Free
-          <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">VPS Edition</span>
-        </h1>
-        <p class="text-[11px] text-gray-400">Multi-Account Pool &amp; Acceleration Router</p>
+        <div class="brand-name">DeepSeek4Free <span class="brand-badge">VPS</span></div>
+        <div class="brand-sub">Multi-Account Pool Router</div>
       </div>
     </div>
 
-    <nav class="flex items-center gap-1 bg-dark-900/80 p-1 rounded-lg border border-dark-700">
-      <button onclick="switchTab('playground')" id="tab-playground" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 bg-dark-700 text-white shadow-sm">
-        <i class="fa-solid fa-comments text-sky-400"></i> Playground
+    <nav class="nav-tabs">
+      <button id="tab-playground" class="nav-tab active" onclick="switchTab('playground')">
+        <span class="tab-icon"><i class="fa-solid fa-comments"></i></span>
+        <span>Playground</span>
       </button>
-      <button onclick="switchTab('pool')" id="tab-pool" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 text-gray-400 hover:text-white">
-        <i class="fa-solid fa-server text-emerald-400"></i> Pool Akun <span id="badge-total-tokens" class="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded-full">0</span>
+      <button id="tab-pool" class="nav-tab" onclick="switchTab('pool')">
+        <span class="tab-icon"><i class="fa-solid fa-server"></i></span>
+        <span>Pool</span>
+        <span class="tab-badge" id="badge-total">0</span>
       </button>
-      <button onclick="switchTab('settings')" id="tab-settings" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 text-gray-400 hover:text-white">
-        <i class="fa-solid fa-sliders text-purple-400"></i> Settings &amp; API
+      <button id="tab-settings" class="nav-tab" onclick="switchTab('settings')">
+        <span class="tab-icon"><i class="fa-solid fa-sliders"></i></span>
+        <span>Pengaturan</span>
       </button>
     </nav>
 
-    <div class="flex items-center gap-2">
-      <div id="quick-boost-indicator" class="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium">
-        <i class="fa-solid fa-bolt text-amber-400"></i> BOOST: <span id="hdr-boost-status">OFF</span>
+    <div class="header-status">
+      <div id="boost-pill" class="status-pill boost" style="display:none">
+        <span class="status-dot"></span>
+        <span class="pill-label">BOOST</span>
       </div>
-      <div id="quick-health-indicator" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-medium">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="hdr-healthy-count">1/1 Sehat</span>
+      <div class="status-pill healthy">
+        <span class="status-dot"></span>
+        <span id="hdr-healthy">0/0</span>
       </div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted)">
+        <i class="fa-solid fa-user" style="font-size:10px"></i>
+        <span id="header-user">admin</span>
+      </div>
+      <button class="btn-icon" onclick="performLogout()" title="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
     </div>
   </header>
 
-  <main class="flex-1 overflow-hidden relative">
+  <main class="app-main">
 
-    <section id="view-playground" class="h-full flex flex-col justify-between max-w-5xl mx-auto px-4 py-3">
-      <div class="flex items-center justify-between pb-2 border-b border-dark-700/60 text-xs text-gray-300 shrink-0">
-        <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
-          <div class="flex items-center gap-1.5">
-            <span class="text-gray-400 text-[11px]">Model:</span>
-            <select id="chat-model" class="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500 font-medium">
-              <option value="deepseek-reasoner" selected>deepseek-reasoner (R1 Deep Thinking 🧠)</option>
-              <option value="deepseek-chat">deepseek-chat (V3 Cepat ⚡)</option>
+    <section id="view-playground" class="view-section view-playground">
+      <div class="playground-toolbar">
+        <div class="toolbar-controls">
+          <div class="control-group">
+            <span class="control-label">Model</span>
+            <select id="chat-model" class="select-input">
+              <option value="deepseek-reasoner" selected>R1 Deep Thinking 🧠</option>
+              <option value="deepseek-chat">V3 Cepat ⚡</option>
             </select>
           </div>
 
-          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-purple-950/30 px-2 py-1 rounded border border-purple-500/30">
-            <input type="checkbox" id="chat-thinking" checked class="rounded bg-dark-700 border-dark-600 text-purple-500 focus:ring-0">
-            <span class="text-purple-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-brain text-purple-400"></i> Deep Thinking</span>
+          <label class="toggle-chip active-purple" data-active-class="active-purple">
+            <input type="checkbox" id="chat-thinking" checked>
+            <i class="fa-solid fa-brain"></i> Thinking
           </label>
 
-          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-sky-950/30 px-2 py-1 rounded border border-sky-500/30">
-            <input type="checkbox" id="chat-search" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
-            <span class="text-sky-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-globe text-sky-400"></i> Web Search</span>
+          <label class="toggle-chip active-sky" data-active-class="active-sky">
+            <input type="checkbox" id="chat-search" checked>
+            <i class="fa-solid fa-globe"></i> Search
           </label>
 
-          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-amber-950/20 px-2 py-1 rounded border border-amber-500/20">
-            <input type="checkbox" id="chat-boost" class="rounded bg-dark-700 border-dark-600 text-amber-500 focus:ring-0">
-            <span class="text-amber-300 text-xs flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> Boost Racing</span>
+          <label class="toggle-chip" data-active-class="active-amber">
+            <input type="checkbox" id="chat-boost">
+            <i class="fa-solid fa-bolt"></i> Boost
           </label>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button onclick="clearChat()" class="px-2 py-1 text-[11px] text-gray-400 hover:text-rose-400 transition flex items-center gap-1">
+        <div class="toolbar-actions">
+          <button onclick="clearChat()" class="btn-ghost">
             <i class="fa-solid fa-trash-can"></i> Bersihkan
           </button>
         </div>
       </div>
 
-      <div id="messages-container" class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
-        <div class="flex gap-3 max-w-3xl">
-          <div class="w-7 h-7 rounded-md bg-sky-600/30 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
-            <i class="fa-solid fa-robot"></i>
-          </div>
-          <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
-            <p class="font-semibold text-white mb-1">👋 Hai! Playground DeepSeek4Free siap.</p>
-            <p class="text-gray-300 text-xs">
-              Fitur <b>Deep Thinking (R1)</b> dan <b>Web Search</b> aktif default. Format rapi tanpa simbol mentah. Tanya apa saja atau minta berita terkini!
-            </p>
+      <div id="messages-container" class="messages-container">
+        <div class="message-ai">
+          <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="ai-bubble">
+            <div class="ai-rendered-content">
+              <strong>Playground siap.</strong> Deep Thinking &amp; Web Search aktif. Tanya apa saja!
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="pt-2 shrink-0">
-        <div class="relative bg-dark-800 border border-dark-600 rounded-xl shadow-lg focus-within:border-sky-500 transition">
-          <textarea id="prompt-input" rows="2" placeholder="Tanyakan apa saja... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)"
-            class="w-full bg-transparent px-4 py-3 text-sm text-white focus:outline-none resize-none placeholder-gray-500 pr-16"></textarea>
-          
-          <div class="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
-            <button id="btn-send" onclick="sendMessage()" class="w-8 h-8 rounded-lg bg-sky-600 hover:bg-sky-500 text-white flex items-center justify-center transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
-              <i class="fa-solid fa-paper-plane text-xs"></i>
-            </button>
-          </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea id="prompt-input" class="prompt-textarea" rows="2" placeholder="Tanya apa saja..."></textarea>
+          <button id="btn-send" class="btn-send" onclick="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
         </div>
-        <div class="flex items-center justify-between text-[11px] text-gray-500 px-1 mt-1.5">
-          <span>🧠 Mode: DeepSeek-R1 (Penalaran Mendalam + Penelusuran Web)</span>
-          <span>⚡ Multi-Account Pool Router Active</span>
+        <div class="input-hint">
+          <span>Enter kirim · Shift+Enter baris baru</span>
+          <span>⚡ Pool Router Aktif</span>
         </div>
       </div>
     </section>
 
-    <section id="view-pool" class="hidden h-full overflow-y-auto max-w-6xl mx-auto px-5 py-6 space-y-6">
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
-          <div class="flex items-center justify-between text-gray-400 text-xs mb-1">
+    <section id="view-pool" class="view-section view-pool hidden">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-header">
             <span>Total Akun</span>
-            <i class="fa-solid fa-users text-sky-400"></i>
+            <i class="fa-solid fa-users color-sky"></i>
           </div>
-          <div id="stat-total" class="text-2xl font-bold text-white">0</div>
-          <p class="text-[11px] text-gray-500 mt-0.5">Terdaftar di pool</p>
+          <div class="stat-value color-sky" id="stat-total">0</div>
+          <div class="stat-desc">Di pool</div>
         </div>
-
-        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
-          <div class="flex items-center justify-between text-emerald-400 text-xs mb-1">
-            <span>Akun Sehat</span>
-            <i class="fa-solid fa-circle-check"></i>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Aktif</span>
+            <i class="fa-solid fa-circle-check color-emerald"></i>
           </div>
-          <div id="stat-healthy" class="text-2xl font-bold text-emerald-400">0</div>
-          <p class="text-[11px] text-gray-500 mt-0.5">Siap melayani request</p>
+          <div class="stat-value color-emerald" id="stat-healthy">0</div>
+          <div class="stat-desc">Siap melayani</div>
         </div>
-
-        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
-          <div class="flex items-center justify-between text-amber-400 text-xs mb-1">
+        <div class="stat-card">
+          <div class="stat-header">
             <span>Cooldown</span>
-            <i class="fa-solid fa-hourglass-half"></i>
+            <i class="fa-solid fa-hourglass-half color-amber"></i>
           </div>
-          <div id="stat-cooldown" class="text-2xl font-bold text-amber-400">0</div>
-          <p class="text-[11px] text-gray-500 mt-0.5">Istirahat rate limit</p>
+          <div class="stat-value color-amber" id="stat-cooldown">0</div>
+          <div class="stat-desc">Rate limited</div>
         </div>
-
-        <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
-          <div class="flex items-center justify-between text-purple-400 text-xs mb-1">
-            <span>Rata-Rata Latensi</span>
-            <i class="fa-solid fa-gauge-high"></i>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Latensi</span>
+            <i class="fa-solid fa-gauge-high color-purple"></i>
           </div>
-          <div id="stat-latency" class="text-2xl font-bold text-purple-300">0 ms</div>
-          <p class="text-[11px] text-gray-500 mt-0.5">Benchmarked live</p>
+          <div class="stat-value color-purple" id="stat-latency">—</div>
+          <div class="stat-desc">Rata-rata</div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between flex-wrap gap-3 bg-dark-800 border border-dark-700 p-3 rounded-xl">
-        <div class="flex items-center gap-2">
-          <button onclick="openModalAddToken()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5 shadow">
-            <i class="fa-solid fa-plus"></i> Tambah Akun (Single/Bulk 100)
-          </button>
-          <button onclick="triggerLearn()" id="btn-learn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600/20 border border-purple-500/40 hover:bg-purple-600/30 text-purple-300 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-brain"></i> Jalankan /learn (Benchmark)
-          </button>
-          <button onclick="fetchPoolStatus()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-200 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-arrows-rotate"></i> Refresh
-          </button>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-server color-sky"></i>
+            Pool Akun
+            <span style="font-size:10px;color:var(--text-muted);font-weight:400">Strategi: <b id="stat-strategy" style="color:var(--text-secondary)">round_robin</b></span>
+          </div>
+          <div class="panel-actions">
+            <button onclick="openModalAddToken()" class="btn-primary">
+              <i class="fa-solid fa-plus"></i> Tambah
+            </button>
+            <button id="btn-learn" onclick="triggerLearn()" class="btn-learn">
+              <i class="fa-solid fa-brain"></i> /learn
+            </button>
+            <button onclick="fetchPoolStatus()" class="btn-secondary">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+            <a href="/api/export" download="tokens.txt" class="btn-secondary" style="text-decoration:none">
+              <i class="fa-solid fa-download"></i>
+            </a>
+          </div>
         </div>
 
-        <div class="flex items-center gap-3 text-xs text-gray-400">
-          <span>Strategi: <b id="stat-strategy" class="text-white uppercase font-mono">round_robin</b></span>
-          <span class="text-dark-600">|</span>
-          <a href="/api/export" download="tokens.txt" class="text-sky-400 hover:underline flex items-center gap-1">
-            <i class="fa-solid fa-download"></i> Unduh tokens.txt
-          </a>
-        </div>
-      </div>
-
-      <div class="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-sm">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-gray-300">
-            <thead class="bg-dark-900/60 text-[11px] text-gray-400 uppercase tracking-wider border-b border-dark-700">
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th class="py-3 px-4">#</th>
-                <th class="py-3 px-4">Nama / Masked Token</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4">Latensi</th>
-                <th class="py-3 px-4">Statistik Request</th>
-                <th class="py-3 px-4">Detail Error</th>
-                <th class="py-3 px-4 text-right">Aksi</th>
+                <th>#</th>
+                <th>Akun</th>
+                <th>Status</th>
+                <th>Latensi</th>
+                <th>OK/Total</th>
+                <th>Error</th>
+                <th style="text-align:right">Aksi</th>
               </tr>
             </thead>
-            <tbody id="tokens-table-body" class="divide-y divide-dark-700/60 font-mono text-[11px]">
-              <tr>
-                <td colspan="7" class="py-8 text-center text-gray-500">Memuat data pool akun...</td>
-              </tr>
+            <tbody id="tokens-tbody">
+              <tr><td colspan="7" class="empty-state">Memuat...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <section id="view-settings" class="hidden h-full overflow-y-auto max-w-4xl mx-auto px-5 py-6 space-y-6">
-      <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
-          <i class="fa-solid fa-sliders text-sky-400"></i> Pengaturan Pool &amp; Rotasi
-        </h3>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div>
-            <label class="block text-gray-300 font-medium mb-1.5">Algoritma Rotasi Akun:</label>
-            <select id="setting-strategy" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-              <option value="round_robin">Round-Robin (Bergantian Rata)</option>
-              <option value="lru">Least-Recently-Used (Akun Paling Lama Menganggur)</option>
+    <section id="view-settings" class="view-section view-settings hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-sliders color-sky"></i> Pool &amp; Rotasi</div>
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label class="form-label">Algoritma Rotasi</label>
+            <select id="setting-strategy" class="form-select">
+              <option value="round_robin">Round-Robin</option>
+              <option value="lru">LRU (Least Recently Used)</option>
             </select>
-            <p class="text-[11px] text-gray-500 mt-1">Mengatur cara router memilih akun berikutnya untuk setiap chat.</p>
+            <span class="form-helper">Cara router memilih akun berikutnya</span>
           </div>
-
-          <div>
-            <label class="block text-gray-300 font-medium mb-1.5">Default /boost Mode (Hedged Racing):</label>
-            <select id="setting-boost" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-              <option value="false">Nonaktif (Satu akun per request)</option>
-              <option value="true">Aktif (Balapan 2 akun tercepat)</option>
+          <div class="form-group">
+            <label class="form-label">Boost Mode</label>
+            <select id="setting-boost" class="form-select">
+              <option value="false">Nonaktif</option>
+              <option value="true">Aktif (Hedged Racing)</option>
             </select>
-            <p class="text-[11px] text-gray-500 mt-1">Memangkas latensi awal dengan meminta respon ke 2 akun paralel.</p>
+            <span class="form-helper">Balapan 2 akun tercepat untuk latensi rendah</span>
           </div>
         </div>
-
-        <div class="pt-2">
-          <button onclick="saveSettings()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow">
-            <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Pengaturan
+        <div class="form-actions">
+          <button onclick="saveSettings()" class="btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan
           </button>
         </div>
       </div>
 
-      <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
-          <i class="fa-solid fa-network-wired text-emerald-400"></i> OpenAI-Compatible Endpoint (Untuk Cursor / Claude / LibreChat)
-        </h3>
-
-        <p class="text-xs text-gray-300 leading-relaxed">
-          Web server ini menyediakan endpoint standar <code class="text-emerald-400 font-mono">/v1/chat/completions</code> yang kompatibel dengan protokol OpenAI. Anda bisa memasang VPS ini ke Cursor, Claude Code, Cline, LibreChat, atau NextChat!
-        </p>
-
-        <div class="bg-dark-900 border border-dark-700 rounded-lg p-3 space-y-2 text-xs font-mono">
-          <div class="flex items-center justify-between text-gray-400">
-            <span>Base URL:</span>
-            <button onclick="copyToClipboard(window.location.origin + '/v1')" class="text-sky-400 hover:underline">Copy</button>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-key color-purple"></i> Keamanan</div>
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <p style="font-size:12px;color:var(--text-muted)">Ganti password akun admin.</p>
+            <button onclick="openModalChangePass()" class="btn-secondary" style="margin-top:8px">
+              <i class="fa-solid fa-lock"></i> Ganti Password
+            </button>
           </div>
-          <div class="text-emerald-300 select-all" id="api-base-url">http://your-vps-ip:8000/v1</div>
+        </div>
+      </div>
 
-          <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
-            <span>Model Name:</span>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-network-wired color-emerald"></i> OpenAI-Compatible API</div>
+        </div>
+        <div style="padding:16px">
+          <div class="api-box">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">Base URL</div>
+                <div class="api-key-value" id="api-base-url">http://localhost:8990/v1</div>
+              </div>
+              <button onclick="copyToClipboard(document.getElementById('api-base-url').textContent)" class="btn-copy">Salin</button>
+            </div>
+            <hr class="api-divider">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">Model</div>
+                <div style="color:var(--accent-sky);font-size:12px">deepseek-reasoner · deepseek-chat</div>
+              </div>
+            </div>
+            <hr class="api-divider">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">API Key</div>
+                <div style="color:var(--text-secondary);font-size:12px">sk-deepseek4free (isi bebas)</div>
+              </div>
+            </div>
           </div>
-          <div class="text-sky-300">deepseek-reasoner <span class="text-gray-500 font-sans text-[11px]">(atau <code class="text-sky-300">deepseek-chat</code>)</span></div>
-
-          <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
-            <span>API Key:</span>
-          </div>
-          <div class="text-gray-300">sk-deepseek4free <span class="text-gray-500 font-sans text-[11px]">(bisa diisi karakter apa saja)</span></div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:10px">
+            Kompatibel dengan Cursor, Claude Code, Cline, LibreChat, NextChat.
+          </p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <div id="modal-add-token" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-dark-700 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-key text-sky-400"></i> Tambah Akun / Token ke Pool
-        </h3>
-        <button onclick="closeModalAddToken()" class="text-gray-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+</div>
 
-      <div class="space-y-3 text-xs">
-        <p class="text-gray-300">
-          Anda bisa memasukkan 1 token atau langsung paste <b>hingga 100 token sekaligus</b> (pisahkan dengan baris baru):
-        </p>
-        <textarea id="input-new-tokens" rows="6" placeholder="Paste userToken di sini...&#10;Contoh:&#10;pRrMRpbCbNjuFSqP9OUDUKOfBRMpTmnDB6aX8qPWIz6ZayfkOvbJzEpA9fkHYk8+&#10;tok_akun2_xxxxxxx&#10;tok_akun3_yyyyyyy"
-          class="w-full bg-dark-900 border border-dark-600 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-sky-500 resize-none"></textarea>
-        
-        <label class="flex items-center gap-2 text-gray-300">
-          <input type="checkbox" id="check-save-disk" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
-          <span>Simpan permanen ke file <code class="text-sky-400 font-mono">tokens.txt</code> di server</span>
-        </label>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 border-t border-dark-700 pt-3">
-        <button onclick="closeModalAddToken()" class="px-4 py-2 text-xs font-medium rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 transition">
-          Batal
-        </button>
-        <button onclick="submitNewTokens()" id="btn-submit-tokens" class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow">
-          Tambahkan ke Pool
-        </button>
-      </div>
+<div id="modal-add-token" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-key color-sky"></i> Tambah Token</div>
+      <button onclick="closeModalAddToken()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-muted)">1 atau bulk token (pisahkan dengan baris baru):</p>
+      <textarea id="input-new-tokens" class="form-textarea" rows="6" placeholder="Paste userToken...&#10;tok_akun1&#10;tok_akun2"></textarea>
+      <label class="check-row">
+        <input type="checkbox" id="check-save-disk" checked>
+        <span>Simpan ke <code style="color:var(--accent-sky);font-size:11px">tokens.txt</code></span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalAddToken()" class="btn-secondary">Batal</button>
+      <button id="btn-submit-tokens" onclick="submitNewTokens()" class="btn-primary">Tambah</button>
     </div>
   </div>
+</div>
 
-  <script>
-    let currentSessionId = null;
-    let isGenerating = false;
+<div id="modal-change-pass" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-lock color-purple"></i> Ganti Password</div>
+      <button onclick="closeModalChangePass()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Password Saat Ini</label>
+        <input type="password" id="input-curr-pass" class="form-input" placeholder="Password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password Baru</label>
+        <input type="password" id="input-new-pass" class="form-input" placeholder="Min. 6 karakter">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konfirmasi</label>
+        <input type="password" id="input-confirm-pass" class="form-input" placeholder="Ulangi password baru">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalChangePass()" class="btn-secondary">Batal</button>
+      <button id="btn-save-pass" onclick="submitChangePassword()" class="btn-primary">Simpan</button>
+    </div>
+  </div>
+</div>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('api-base-url').innerText = window.location.origin + '/v1';
-      fetchPoolStatus();
-      setInterval(fetchPoolStatus, 5000);
-    });
+<div id="toast-container" class="toast-container"></div>
 
-    function switchTab(tab) {
-      ['playground', 'pool', 'settings'].forEach(t => {
-        const view = document.getElementById(`view-${t}`);
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          view.classList.remove('hidden');
-          btn.classList.add('bg-dark-700', 'text-white', 'shadow-sm');
-          btn.classList.remove('text-gray-400');
-        } else {
-          view.classList.add('hidden');
-          btn.classList.remove('bg-dark-700', 'text-white', 'shadow-sm');
-          btn.classList.add('text-gray-400');
-        }
-      });
-      if (tab === 'pool') fetchPoolStatus();
-    }
-
-    function cleanRenderMarkdown(raw) {
-      if (!raw) return '';
-      
-      let html = '';
-      if (typeof marked !== 'undefined' && marked.parse) {
-        try {
-          html = marked.parse(raw);
-        } catch(e) {
-          html = '';
-        }
-      }
-
-      if (!html || html.includes('**')) {
-        let text = escapeHtml(raw);
-
-        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
-
-        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-        text = text.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="ml-4 list-disc">$1</li>');
-        text = text.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="ml-4 list-decimal">$2</li>');
-
-        text = text.replace(/\n\n/g, '<div class="h-2"></div>');
-        text = text.replace(/\n/g, '<br/>');
-
-        html = text;
-      }
-
-      html = html.replace(/\[citation:(\d+)\]/g, '<span class="inline-flex items-center px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-mono mx-0.5 font-bold cursor-pointer hover:bg-sky-500/30" title="Sumber Sitasi $1">🔍 [$1]</span>');
-
-      return html;
-    }
-
-    async function fetchPoolStatus() {
-      try {
-        const res = await fetch('/api/status');
-        if (!res.ok) return;
-        const data = await res.json();
-
-        document.getElementById('stat-total').innerText = data.total_tokens || 0;
-        document.getElementById('badge-total-tokens').innerText = data.total_tokens || 0;
-        document.getElementById('stat-healthy').innerText = data.healthy || 0;
-        document.getElementById('stat-cooldown').innerText = data.cooldown || 0;
-        document.getElementById('stat-strategy').innerText = data.strategy || 'round_robin';
-        document.getElementById('setting-strategy').value = data.strategy || 'round_robin';
-        document.getElementById('setting-boost').value = String(data.boost_enabled);
-        document.getElementById('hdr-boost-status').innerText = data.boost_enabled ? 'ON' : 'OFF';
-        document.getElementById('hdr-healthy-count').innerText = `${data.healthy}/${data.total_tokens} Sehat`;
-
-        let totalLat = 0, countLat = 0;
-        (data.tokens || []).forEach(t => {
-          if (t.latency_ms > 0) { totalLat += t.latency_ms; countLat++; }
-        });
-        document.getElementById('stat-latency').innerText = countLat > 0 ? `${(totalLat / countLat).toFixed(0)} ms` : '-';
-
-        const tbody = document.getElementById('tokens-table-body');
-        if (!data.tokens || data.tokens.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada akun di pool.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = data.tokens.map((t, i) => {
-          let statusBadge = '';
-          if (t.status === 'healthy') {
-            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">HEALTHY</span>';
-          } else if (t.status === 'cooldown') {
-            statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">COOLDOWN (${t.cooldown_remaining.toFixed(0)}s)</span>`;
-          } else {
-            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]">INVALID</span>';
-          }
-
-          const latencyDisplay = t.latency_ms > 0 ? `${t.latency_ms.toFixed(1)} ms` : '-';
-          const reqsDisplay = `OK: ${t.total_successes} | Err: ${t.total_errors}`;
-          const errDetail = t.last_error ? `<span class="text-rose-400 truncate max-w-xs block" title="${t.last_error}">${t.last_error}</span>` : '<span class="text-gray-600">-</span>';
-
-          return `
-            <tr class="hover:bg-dark-750 transition">
-              <td class="py-2.5 px-4 text-gray-500">${i + 1}</td>
-              <td class="py-2.5 px-4 font-bold text-white">${t.name}</td>
-              <td class="py-2.5 px-4">${statusBadge}</td>
-              <td class="py-2.5 px-4 text-purple-300">${latencyDisplay}</td>
-              <td class="py-2.5 px-4 text-gray-300">${reqsDisplay}</td>
-              <td class="py-2.5 px-4">${errDetail}</td>
-              <td class="py-2.5 px-4 text-right">
-                <button onclick="removeToken('${t.name}')" class="text-gray-500 hover:text-rose-400 transition" title="Hapus token">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-      } catch (err) {
-        console.error('Failed to fetch status:', err);
-      }
-    }
-
-    async function triggerLearn() {
-      const btn = document.getElementById('btn-learn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menjalankan /learn...';
-      try {
-        const res = await fetch('/api/learn', { method: 'POST' });
-        const result = await res.json();
-        alert(`✅ /learn Selesai!\n\nDiscovered: ${result.discovered}\nValid: ${result.valid}\nFastest: ${result.fastest || '-'}`);
-        fetchPoolStatus();
-      } catch (e) {
-        alert('Gagal menjalankan /learn: ' + e.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-brain"></i> Jalankan /learn (Benchmark)';
-      }
-    }
-
-    function openModalAddToken() {
-      document.getElementById('modal-add-token').classList.remove('hidden');
-      document.getElementById('input-new-tokens').focus();
-    }
-    function closeModalAddToken() {
-      document.getElementById('modal-add-token').classList.add('hidden');
-      document.getElementById('input-new-tokens').value = '';
-    }
-
-    async function submitNewTokens() {
-      const raw = document.getElementById('input-new-tokens').value.trim();
-      if (!raw) return;
-      const saveDisk = document.getElementById('check-save-disk').checked;
-
-      const btn = document.getElementById('btn-submit-tokens');
-      btn.disabled = true;
-      btn.innerText = 'Menyimpan...';
-
-      try {
-        const res = await fetch('/api/tokens/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokens_raw: raw, save_disk: saveDisk })
-        });
-        const data = await res.json();
-        alert(`✅ Berhasil menambahkan ${data.added} token ke pool!`);
-        closeModalAddToken();
-        fetchPoolStatus();
-      } catch (e) {
-        alert('Gagal menambah token: ' + e.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerText = 'Tambahkan ke Pool';
-      }
-    }
-
-    async function removeToken(tokenName) {
-      if (!confirm(`Hapus token ${tokenName} dari pool?`)) return;
-      try {
-        await fetch('/api/tokens/remove', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: tokenName })
-        });
-        fetchPoolStatus();
-      } catch (e) {
-        alert('Gagal menghapus token: ' + e.message);
-      }
-    }
-
-    async function saveSettings() {
-      const strategy = document.getElementById('setting-strategy').value;
-      const boost = document.getElementById('setting-boost').value === 'true';
-
-      try {
-        const res = await fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ strategy: strategy, boost_enabled: boost })
-        });
-        if (res.ok) {
-          alert('✅ Pengaturan pool berhasil disimpan!');
-          fetchPoolStatus();
-        }
-      } catch (e) {
-        alert('Gagal menyimpan: ' + e.message);
-      }
-    }
-
-    async function sendMessage() {
-      if (isGenerating) return;
-      const input = document.getElementById('prompt-input');
-      const prompt = input.value.trim();
-      if (!prompt) return;
-
-      input.value = '';
-      isGenerating = true;
-      document.getElementById('btn-send').disabled = true;
-
-      const container = document.getElementById('messages-container');
-
-      const userBubble = document.createElement('div');
-      userBubble.className = 'flex justify-end gap-3';
-      userBubble.innerHTML = `
-        <div class="bg-sky-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-2xl text-sm shadow leading-relaxed whitespace-pre-wrap font-medium">
-          ${escapeHtml(prompt)}
-        </div>
-      `;
-      container.appendChild(userBubble);
-
-      const assistantBubble = document.createElement('div');
-      assistantBubble.className = 'flex gap-3 max-w-3xl';
-      const msgId = 'msg-' + Date.now();
-
-      assistantBubble.innerHTML = `
-        <div class="w-7 h-7 rounded-md bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white text-xs shrink-0 mt-0.5 shadow">
-          <i class="fa-solid fa-robot"></i>
-        </div>
-        <div class="flex-1 bg-dark-800 border border-dark-700 rounded-xl p-4 text-sm shadow-sm space-y-3">
-          <div id="${msgId}-search-box" class="hidden rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-300 flex items-center gap-2">
-            <i class="fa-solid fa-globe animate-spin text-sky-400"></i>
-            <span id="${msgId}-search-text">Sedang menelusuri web untuk data terbaru...</span>
-          </div>
-
-          <div id="${msgId}-thinking-box" class="hidden rounded-lg border border-purple-500/30 bg-purple-950/20 overflow-hidden">
-            <button onclick="toggleThinking('${msgId}')" class="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-purple-300 hover:bg-purple-900/30 transition">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-brain text-purple-400"></i> DeepSeek-R1 Thinking Process</span>
-              <div class="flex items-center gap-2">
-                <span id="${msgId}-thinking-status" class="text-[10px] text-purple-400/80 animate-pulse">Sedang bernalar...</span>
-                <i id="${msgId}-thinking-icon" class="fa-solid fa-chevron-down text-[10px]"></i>
-              </div>
-            </button>
-            <div id="${msgId}-thinking-content" class="p-3 text-xs text-gray-300 font-mono border-t border-purple-500/20 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto"></div>
-          </div>
-
-          <div id="${msgId}-text-content" class="ai-rendered-content">
-            <span class="inline-flex items-center gap-2 text-sky-400 font-mono text-xs animate-pulse">
-              <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke DeepSeek AI...
-            </span>
-          </div>
-
-          <div id="${msgId}-footer" class="hidden pt-2 border-t border-dark-700/60 flex items-center justify-between text-[11px] text-gray-500">
-            <span id="${msgId}-account-tag" class="flex items-center gap-1 text-emerald-400 font-mono">
-              <i class="fa-solid fa-shield-halved text-[10px]"></i> Dilayani oleh Pool
-            </span>
-            <button onclick="copyElementText('${msgId}-text-content')" class="hover:text-white transition flex items-center gap-1">
-              <i class="fa-regular fa-copy"></i> Salin
-            </button>
-          </div>
-        </div>
-      `;
-      container.appendChild(assistantBubble);
-      container.scrollTop = container.scrollHeight;
-
-      const searchBox = document.getElementById(`${msgId}-search-box`);
-      const searchText = document.getElementById(`${msgId}-search-text`);
-      const thinkingBox = document.getElementById(`${msgId}-thinking-box`);
-      const thinkingStatus = document.getElementById(`${msgId}-thinking-status`);
-      const thinkingContent = document.getElementById(`${msgId}-thinking-content`);
-      const textContent = document.getElementById(`${msgId}-text-content`);
-      const footer = document.getElementById(`${msgId}-footer`);
-      const accountTag = document.getElementById(`${msgId}-account-tag`);
-
-      let fullText = '';
-      let fullThinking = '';
-
-      const model = document.getElementById('chat-model').value;
-      const thinkingEnabled = document.getElementById('chat-thinking').checked;
-      const boostEnabled = document.getElementById('chat-boost').checked;
-      const searchEnabled = document.getElementById('chat-search').checked;
-
-      if (searchEnabled) {
-        searchBox.classList.remove('hidden');
-      }
-
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: prompt,
-            model: model,
-            thinking_enabled: thinkingEnabled,
-            boost_enabled: boostEnabled,
-            search_enabled: searchEnabled,
-            session_id: currentSessionId
-          })
-        });
-
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({ detail: 'HTTP Error ' + response.status }));
-          textContent.innerHTML = `<span class="text-rose-400 font-semibold">❌ Error: ${err.detail || 'Gagal memproses request'}</span>`;
-          isGenerating = false;
-          document.getElementById('btn-send').disabled = false;
-          return;
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop();
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const dataStr = line.slice(6).trim();
-            if (dataStr === '[DONE]') break;
-
-            try {
-              const payload = JSON.parse(dataStr);
-              if (payload.session_id) currentSessionId = payload.session_id;
-              if (payload.token_used) accountTag.innerHTML = `<i class="fa-solid fa-shield-halved text-[10px]"></i> Akun: <b>${payload.token_used}</b>`;
-
-              if (payload.type === 'search_status') {
-                searchBox.classList.remove('hidden');
-                searchText.innerText = 'Menelusuri informasi web: ' + payload.content;
-              } else if (payload.type === 'search_results') {
-                searchBox.classList.remove('hidden');
-                try {
-                  const sources = JSON.parse(payload.content);
-                  searchText.innerHTML = `✅ Ditemukan <b>${sources.length}</b> referensi web terpercaya.`;
-                } catch(e) {}
-              } else if (payload.type === 'thinking') {
-                thinkingBox.classList.remove('hidden');
-                fullThinking += payload.content;
-                thinkingContent.innerText = fullThinking;
-              } else if (payload.type === 'text') {
-                thinkingStatus.innerText = 'Selesai bernalar';
-                thinkingStatus.classList.remove('animate-pulse');
-                fullText += payload.content;
-                textContent.innerHTML = cleanRenderMarkdown(fullText);
-              }
-              container.scrollTop = container.scrollHeight;
-            } catch (e) {}
-          }
-        }
-
-        footer.classList.remove('hidden');
-        if (!fullText && fullThinking) {
-          textContent.innerHTML = cleanRenderMarkdown(fullThinking);
-        }
-
-      } catch (err) {
-        textContent.innerHTML = `<span class="text-rose-400">❌ Gagal terhubung ke server: ${err.message}</span>`;
-      } finally {
-        isGenerating = false;
-        document.getElementById('btn-send').disabled = false;
-      }
-    }
-
-    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    function toggleThinking(msgId) {
-      const el = document.getElementById(`${msgId}-thinking-content`);
-      const icon = document.getElementById(`${msgId}-thinking-icon`);
-      if (el.classList.contains('hidden')) {
-        el.classList.remove('hidden');
-        icon.className = 'fa-solid fa-chevron-down text-[10px]';
-      } else {
-        el.classList.add('hidden');
-        icon.className = 'fa-solid fa-chevron-right text-[10px]';
-      }
-    }
-
-    function clearChat() {
-      currentSessionId = null;
-      document.getElementById('messages-container').innerHTML = `
-        <div class="flex gap-3 max-w-3xl">
-          <div class="w-7 h-7 rounded-md bg-sky-600/30 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
-            <i class="fa-solid fa-robot"></i>
-          </div>
-          <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
-            <p class="font-semibold text-white mb-1">Percakapan baru telah dimulai.</p>
-            <p class="text-gray-300 text-xs">Silakan ketik pertanyaan di bawah.</p>
-          </div>
-        </div>
-      `;
-    }
-
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text);
-      alert('Tersalin ke clipboard!');
-    }
-
-    function copyElementText(elId) {
-      const el = document.getElementById(elId);
-      if (el) {
-        navigator.clipboard.writeText(el.innerText);
-        alert('Teks respon tersalin!');
-      }
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-  </script>
+<script src="/web/auth.js"></script>
+<script src="/web/app.js"></script>
 </body>
 </html>

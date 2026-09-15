@@ -16,11 +16,14 @@ from .pool import (
     PoolError,
     NoAvailableTokensError,
 )
+from .db import JSONDatabase, db
 
 __all__ = [
     "DeepSeekAPI",
     "DeepSeekPool",
     "DeepSeekPOW",
+    "JSONDatabase",
+    "db",
     "TokenEntry",
     "TokenStatus",
     "PoolStrategy",

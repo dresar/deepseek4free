@@ -10,8 +10,8 @@ if not exist ".venv" (
     exit /b 1
 )
 
-set PORT=8000
+set PORT=8990
 set HOST=0.0.0.0
 
-echo 🌐 Server berjalan di http://localhost:8000
+echo 🌐 Server berjalan di http://localhost:8990
 .venv\Scripts\python.exe web_server.py
