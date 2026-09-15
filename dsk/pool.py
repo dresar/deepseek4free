@@ -367,15 +367,29 @@ class DeepSeekPool:
 
         return True
 
+    def find_entry(self, identifier: str) -> Optional[TokenEntry]:
+        """Find a token entry by full raw token, name, or masked token."""
+        if not identifier:
+            return None
+        clean = identifier.strip().strip('"').strip("'")
+        with self._lock:
+            if clean in self._tokens_map:
+                return self._tokens_map[clean]
+            for e in self._tokens:
+                if (
+                    e.name == clean
+                    or e.token == clean
+                    or TokenEntry.mask_token(e.token) == clean
+                    or (clean.endswith("...") and e.token.startswith(clean[:-3]))
+                    or ("..." in clean and e.token.startswith(clean.split("...")[0]) and e.token.endswith(clean.split("...")[1]))
+                ):
+                    return e
+        return None
+
     def remove_token(self, token: str, save_to_file: bool = False) -> bool:
         clean_token = token.strip().strip('"').strip("'")
         with self._lock:
-            entry = self._tokens_map.get(clean_token)
-            if not entry:
-                for e in self._tokens:
-                    if e.name == clean_token or TokenEntry.mask_token(e.token) == clean_token:
-                        entry = e
-                        break
+            entry = self.find_entry(clean_token)
             if not entry:
                 return False
             raw_token = entry.token
@@ -536,10 +550,9 @@ class DeepSeekPool:
             entry = token_or_entry
         else:
             clean_tok = token_or_entry.strip().strip('"').strip("'")
-            with self._lock:
-                entry = self._tokens_map.get(clean_tok)
-                if not entry:
-                    entry = TokenEntry(clean_tok, api_factory=self.api_factory)
+            entry = self.find_entry(clean_tok)
+            if not entry:
+                entry = TokenEntry(clean_tok, api_factory=self.api_factory)
 
         start_time = time.time()
         try:

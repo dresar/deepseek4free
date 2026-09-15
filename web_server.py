@@ -350,8 +350,10 @@ async def add_tokens(req: AddTokensRequest, _: str = Depends(require_auth)):
 
 @app.post("/api/tokens/remove")
 async def remove_token(req: RemoveTokenRequest, _: str = Depends(require_auth)):
+    entry = pool.find_entry(req.token)
+    raw_token = entry.token if entry else req.token
     pool.remove_token(req.token)
-    db.remove_token(req.token)
+    db.remove_token(raw_token)
     tokens_file = BASE_DIR / "tokens.txt"
     if tokens_file.exists():
         with open(tokens_file, "w", encoding="utf-8") as f:
@@ -366,13 +368,16 @@ async def test_single_token(req: TestTokenRequest, _: str = Depends(require_auth
     token = req.token.strip()
     if not token:
         raise HTTPException(status_code=400, detail="Token tidak boleh kosong")
+    entry = pool.find_entry(token)
+    target = entry if entry else token
     loop = asyncio.get_event_loop()
     start_time = time.time()
-    valid = await loop.run_in_executor(None, lambda: pool.validate_token(token))
+    valid = await loop.run_in_executor(None, lambda: pool.validate_token(target))
     latency_ms = int((time.time() - start_time) * 1000)
-    entry = pool._tokens_map.get(token)
-    error_msg = entry.last_error if entry else None
-    db.update_token_test(token, is_healthy=valid, latency_ms=latency_ms, error=error_msg)
+    actual_entry = entry or pool.find_entry(token)
+    error_msg = actual_entry.last_error if actual_entry else None
+    raw_token = actual_entry.token if actual_entry else token
+    db.update_token_test(raw_token, is_healthy=valid, latency_ms=latency_ms, error=error_msg)
     return {
         "status": "ok",
         "valid": valid,
