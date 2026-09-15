@@ -285,13 +285,23 @@ class DeepSeekAPI:
                             current_type = 'thinking'
                         elif path == 'response/content':
                             current_type = 'text'
+                        elif path == 'response/search_status':
+                            current_type = 'search_status'
+                        elif path == 'response/search_results':
+                            current_type = 'search_results'
 
                         if path == 'response/status' and data.get('v') == 'FINISHED':
                             yield {'content': '', 'type': current_type, 'finish_reason': 'stop'}
                             break
 
                         val = data.get('v')
-                        if isinstance(val, str) and val:
+                        if path == 'response/search_results' and isinstance(val, list):
+                            yield {
+                                'content': json.dumps(val),
+                                'type': 'search_results',
+                                'finish_reason': None
+                            }
+                        elif isinstance(val, str) and val:
                             yield {
                                 'content': val,
                                 'type': current_type,

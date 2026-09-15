@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeepSeek4Free - Web Playground & Multi-Account Router</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
@@ -20,8 +20,10 @@
               700: '#075985',
             },
             dark: {
+              950: '#070a0f',
               900: '#0b0f17',
               800: '#111827',
+              750: '#182234',
               700: '#1f2937',
               600: '#374151',
             }
@@ -36,8 +38,82 @@
     ::-webkit-scrollbar-track { background: #0b0f17; }
     ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-    .prose pre { background: #090d16 !important; border-radius: 6px; padding: 12px; border: 1px solid #1f2937; }
-    .prose code { color: #38bdf8; font-family: monospace; }
+    
+    /* Markdown Body Styling */
+    .ai-rendered-content {
+      color: #e2e8f0;
+      line-height: 1.65;
+      font-size: 0.875rem;
+    }
+    .ai-rendered-content strong, .ai-rendered-content b {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .ai-rendered-content h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 0.25rem;
+    }
+    .ai-rendered-content h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 0.85rem;
+      margin-bottom: 0.4rem;
+    }
+    .ai-rendered-content h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-top: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    .ai-rendered-content ul {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin-top: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+    .ai-rendered-content ol {
+      list-style-type: decimal;
+      padding-left: 1.25rem;
+      margin-top: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+    .ai-rendered-content li {
+      margin-bottom: 0.25rem;
+    }
+    .ai-rendered-content pre {
+      background: #070a0f !important;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 8px 0;
+      overflow-x: auto;
+    }
+    .ai-rendered-content code {
+      background: #111827;
+      color: #38bdf8;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.82em;
+    }
+    .ai-rendered-content pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .ai-rendered-content blockquote {
+      border-left: 3px solid #0284c7;
+      padding-left: 10px;
+      color: #94a3b8;
+      margin: 8px 0;
+      font-style: italic;
+    }
   </style>
 </head>
 <body class="bg-dark-900 text-gray-100 flex flex-col h-screen overflow-hidden font-sans">
@@ -90,31 +166,31 @@
       <!-- Chat Controls / Options Strip -->
       <div class="flex items-center justify-between pb-2 border-b border-dark-700/60 text-xs text-gray-300 shrink-0">
         <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
-          <!-- Model Selection -->
+          <!-- Model Selection (Default: deepseek-reasoner R1) -->
           <div class="flex items-center gap-1.5">
             <span class="text-gray-400 text-[11px]">Model:</span>
-            <select id="chat-model" class="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500">
-              <option value="deepseek-chat">deepseek-chat (Default)</option>
-              <option value="deepseek-reasoner">deepseek-reasoner (R1 Thinking)</option>
+            <select id="chat-model" class="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500 font-medium">
+              <option value="deepseek-reasoner" selected>deepseek-reasoner (R1 Deep Thinking 🧠)</option>
+              <option value="deepseek-chat">deepseek-chat (V3 Cepat ⚡)</option>
             </select>
           </div>
 
-          <!-- Thinking Toggle -->
-          <label class="flex items-center gap-1.5 cursor-pointer select-none">
-            <input type="checkbox" id="chat-thinking" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
-            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-brain text-purple-400"></i> Thinking</span>
+          <!-- Thinking Toggle (Checked by default) -->
+          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-purple-950/30 px-2 py-1 rounded border border-purple-500/30">
+            <input type="checkbox" id="chat-thinking" checked class="rounded bg-dark-700 border-dark-600 text-purple-500 focus:ring-0">
+            <span class="text-purple-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-brain text-purple-400"></i> Deep Thinking</span>
+          </label>
+
+          <!-- Web Search Toggle (Checked by default) -->
+          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-sky-950/30 px-2 py-1 rounded border border-sky-500/30">
+            <input type="checkbox" id="chat-search" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
+            <span class="text-sky-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-globe text-sky-400"></i> Web Search</span>
           </label>
 
           <!-- Boost Toggle -->
-          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none bg-amber-950/20 px-2 py-1 rounded border border-amber-500/20">
             <input type="checkbox" id="chat-boost" class="rounded bg-dark-700 border-dark-600 text-amber-500 focus:ring-0">
-            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> Boost Racing</span>
-          </label>
-
-          <!-- Web Search Toggle -->
-          <label class="flex items-center gap-1.5 cursor-pointer select-none">
-            <input type="checkbox" id="chat-search" class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
-            <span class="text-gray-300 text-xs flex items-center gap-1"><i class="fa-solid fa-globe text-sky-400"></i> Web Search</span>
+            <span class="text-amber-300 text-xs flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> Boost Racing</span>
           </label>
         </div>
 
@@ -135,7 +211,7 @@
           <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
             <p class="font-semibold text-white mb-1">👋 Halo! Playground DeepSeek4Free siap digunakan.</p>
             <p class="text-gray-300 text-xs">
-              Sistem ini berjalan di atas pool token multi-akun dengan auto-failover, load balancing, dan streaming realtime. Silakan ketik pertanyaan di bawah untuk mulai berinteraksi!
+              Fitur <b>Deep Thinking (R1)</b> dan <b>Web Search</b> sudah aktif secara default. Format tampilan otomatis dirapikan tanpa simbol mentah. Silakan tanyakan hal apa pun atau minta pencarian berita terkini!
             </p>
           </div>
         </div>
@@ -144,7 +220,7 @@
       <!-- Input Box Area -->
       <div class="pt-2 shrink-0">
         <div class="relative bg-dark-800 border border-dark-600 rounded-xl shadow-lg focus-within:border-sky-500 transition">
-          <textarea id="prompt-input" rows="2" placeholder="Ketik pesan Anda... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)"
+          <textarea id="prompt-input" rows="2" placeholder="Tanyakan apa saja... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)"
             class="w-full bg-transparent px-4 py-3 text-sm text-white focus:outline-none resize-none placeholder-gray-500 pr-16"></textarea>
           
           <div class="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
@@ -153,9 +229,10 @@
             </button>
           </div>
         </div>
-        <p class="text-center text-[10px] text-gray-500 mt-1.5">
-          DeepSeek Web API Reverse-Engineered • Multi-Account Rotation • Managed by Eka Syarif Maulana
-        </p>
+        <div class="flex items-center justify-between text-[11px] text-gray-500 px-1 mt-1.5">
+          <span>🧠 Mode: DeepSeek-R1 (Penalaran Mendalam + Penelusuran Web)</span>
+          <span>⚡ Multi-Account Pool Router Active</span>
+        </div>
       </div>
     </section>
 
@@ -303,32 +380,12 @@
           <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
             <span>Model Name:</span>
           </div>
-          <div class="text-sky-300">deepseek-chat <span class="text-gray-500 font-sans text-[11px]">(atau <code class="text-purple-300">deepseek-reasoner</code> untuk R1)</span></div>
+          <div class="text-sky-300">deepseek-reasoner <span class="text-gray-500 font-sans text-[11px]">(atau <code class="text-sky-300">deepseek-chat</code>)</span></div>
 
           <div class="flex items-center justify-between text-gray-400 pt-2 border-t border-dark-800">
             <span>API Key:</span>
           </div>
           <div class="text-gray-300">sk-deepseek4free <span class="text-gray-500 font-sans text-[11px]">(bisa diisi karakter apa saja)</span></div>
-        </div>
-
-        <!-- Python Example Code -->
-        <div class="space-y-1.5">
-          <span class="text-xs font-semibold text-gray-300">Contoh Penggunaan Python (OpenAI SDK):</span>
-          <pre class="bg-dark-900 p-3 rounded-lg text-xs font-mono text-gray-300 overflow-x-auto border border-dark-700"><code>from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="sk-deepseek4free"
-)
-
-response = client.chat.completions.create(
-    model="deepseek-chat",
-    messages=[{"role": "user", "content": "Halo DeepSeek!"}],
-    stream=True
-)
-
-for chunk in response:
-    print(chunk.choices[0].delta.content or "", end="", flush=True)</code></pre>
         </div>
       </div>
     </section>
@@ -380,7 +437,7 @@ for chunk in response:
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('api-base-url').innerText = window.location.origin + '/v1';
       fetchPoolStatus();
-      setInterval(fetchPoolStatus, 5000); // live polling pool status
+      setInterval(fetchPoolStatus, 5000);
     });
 
     // Tab Navigation
@@ -401,6 +458,59 @@ for chunk in response:
       if (tab === 'pool') fetchPoolStatus();
     }
 
+    // Custom Robust Markdown Formatter (Zero-fail, converts all ** and symbols into clean HTML)
+    function cleanRenderMarkdown(raw) {
+      if (!raw) return '';
+      
+      // If marked is loaded without issue, run it first
+      let html = '';
+      if (typeof marked !== 'undefined' && marked.parse) {
+        try {
+          html = marked.parse(raw);
+        } catch(e) {
+          html = '';
+        }
+      }
+
+      // If marked didn't produce output or left raw asterisks, format cleanly
+      if (!html || html.includes('**')) {
+        let text = escapeHtml(raw);
+
+        // Code blocks ```...```
+        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        // Inline code `...`
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Headers # ## ###
+        text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // Bold **text** -> clean bold without ugly asterisks
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+        // Italic *text*
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Bullet lists
+        text = text.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="ml-4 list-disc">$1</li>');
+        // Numbered lists
+        text = text.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="ml-4 list-decimal">$2</li>');
+
+        // Line breaks
+        text = text.replace(/\n\n/g, '<div class="h-2"></div>');
+        text = text.replace(/\n/g, '<br/>');
+
+        html = text;
+      }
+
+      // Format DeepSeek web citations cleanly: [citation:1] -> badge chip
+      html = html.replace(/\[citation:(\d+)\]/g, '<span class="inline-flex items-center px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-mono mx-0.5 font-bold cursor-pointer hover:bg-sky-500/30" title="Sumber Sitasi $1">🔍 [$1]</span>');
+
+      return html;
+    }
+
     // Fetch Pool Status
     async function fetchPoolStatus() {
       try {
@@ -408,7 +518,6 @@ for chunk in response:
         if (!res.ok) return;
         const data = await res.json();
 
-        // Update header & metrics
         document.getElementById('stat-total').innerText = data.total_tokens || 0;
         document.getElementById('badge-total-tokens').innerText = data.total_tokens || 0;
         document.getElementById('stat-healthy').innerText = data.healthy || 0;
@@ -419,17 +528,15 @@ for chunk in response:
         document.getElementById('hdr-boost-status').innerText = data.boost_enabled ? 'ON' : 'OFF';
         document.getElementById('hdr-healthy-count').innerText = `${data.healthy}/${data.total_tokens} Sehat`;
 
-        // Calculate average latency
         let totalLat = 0, countLat = 0;
         (data.tokens || []).forEach(t => {
           if (t.latency_ms > 0) { totalLat += t.latency_ms; countLat++; }
         });
         document.getElementById('stat-latency').innerText = countLat > 0 ? `${(totalLat / countLat).toFixed(0)} ms` : '-';
 
-        // Render Table
         const tbody = document.getElementById('tokens-table-body');
         if (!data.tokens || data.tokens.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada akun di pool. Klik tombol Tambah Akun.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada akun di pool.</td></tr>';
           return;
         }
 
@@ -469,7 +576,6 @@ for chunk in response:
       }
     }
 
-    // Trigger /learn Benchmark
     async function triggerLearn() {
       const btn = document.getElementById('btn-learn');
       btn.disabled = true;
@@ -487,7 +593,6 @@ for chunk in response:
       }
     }
 
-    // Modal Add Token
     function openModalAddToken() {
       document.getElementById('modal-add-token').classList.remove('hidden');
       document.getElementById('input-new-tokens').focus();
@@ -538,7 +643,6 @@ for chunk in response:
       }
     }
 
-    // Save Settings
     async function saveSettings() {
       const strategy = document.getElementById('setting-strategy').value;
       const boost = document.getElementById('setting-boost').value === 'true';
@@ -571,17 +675,17 @@ for chunk in response:
 
       const container = document.getElementById('messages-container');
 
-      // Append User Bubble
+      // User Bubble
       const userBubble = document.createElement('div');
       userBubble.className = 'flex justify-end gap-3';
       userBubble.innerHTML = `
-        <div class="bg-sky-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-2xl text-sm shadow leading-relaxed whitespace-pre-wrap">
+        <div class="bg-sky-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-2xl text-sm shadow leading-relaxed whitespace-pre-wrap font-medium">
           ${escapeHtml(prompt)}
         </div>
       `;
       container.appendChild(userBubble);
 
-      // Append Assistant Bubble (placeholder)
+      // Assistant Bubble
       const assistantBubble = document.createElement('div');
       assistantBubble.className = 'flex gap-3 max-w-3xl';
       const msgId = 'msg-' + Date.now();
@@ -591,23 +695,34 @@ for chunk in response:
           <i class="fa-solid fa-robot"></i>
         </div>
         <div class="flex-1 bg-dark-800 border border-dark-700 rounded-xl p-4 text-sm shadow-sm space-y-3">
-          <!-- Thinking Collapsible Accordion -->
+          <!-- Web Search Status Widget -->
+          <div id="${msgId}-search-box" class="hidden rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-300 flex items-center gap-2">
+            <i class="fa-solid fa-globe animate-spin text-sky-400"></i>
+            <span id="${msgId}-search-text">Sedang menelusuri web untuk data terbaru...</span>
+          </div>
+
+          <!-- Thinking Collapsible Accordion (DeepSeek-R1) -->
           <div id="${msgId}-thinking-box" class="hidden rounded-lg border border-purple-500/30 bg-purple-950/20 overflow-hidden">
-            <button onclick="toggleThinking('${msgId}')" class="w-full px-3 py-1.5 flex items-center justify-between text-xs font-semibold text-purple-300 hover:bg-purple-900/30 transition">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-brain text-purple-400"></i> Thinking Process</span>
-              <i id="${msgId}-thinking-icon" class="fa-solid fa-chevron-down text-[10px]"></i>
+            <button onclick="toggleThinking('${msgId}')" class="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-purple-300 hover:bg-purple-900/30 transition">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-brain text-purple-400"></i> DeepSeek-R1 Thinking Process</span>
+              <div class="flex items-center gap-2">
+                <span id="${msgId}-thinking-status" class="text-[10px] text-purple-400/80 animate-pulse">Sedang bernalar...</span>
+                <i id="${msgId}-thinking-icon" class="fa-solid fa-chevron-down text-[10px]"></i>
+              </div>
             </button>
-            <div id="${msgId}-thinking-content" class="p-3 text-xs text-gray-300 font-mono border-t border-purple-500/20 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto"></div>
+            <div id="${msgId}-thinking-content" class="p-3 text-xs text-gray-300 font-mono border-t border-purple-500/20 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto"></div>
           </div>
 
           <!-- Answer Content -->
-          <div id="${msgId}-text-content" class="prose prose-invert max-w-none text-sm text-gray-200 leading-relaxed">
-            <span class="inline-block animate-pulse text-sky-400 font-mono text-xs">Menunggu respon DeepSeek...</span>
+          <div id="${msgId}-text-content" class="ai-rendered-content">
+            <span class="inline-flex items-center gap-2 text-sky-400 font-mono text-xs animate-pulse">
+              <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke DeepSeek AI...
+            </span>
           </div>
 
           <!-- Metadata Footer -->
           <div id="${msgId}-footer" class="hidden pt-2 border-t border-dark-700/60 flex items-center justify-between text-[11px] text-gray-500">
-            <span id="${msgId}-account-tag" class="flex items-center gap-1 text-emerald-400">
+            <span id="${msgId}-account-tag" class="flex items-center gap-1 text-emerald-400 font-mono">
               <i class="fa-solid fa-shield-halved text-[10px]"></i> Dilayani oleh Pool
             </span>
             <button onclick="copyElementText('${msgId}-text-content')" class="hover:text-white transition flex items-center gap-1">
@@ -619,8 +734,11 @@ for chunk in response:
       container.appendChild(assistantBubble);
       container.scrollTop = container.scrollHeight;
 
-      // Stream Request via SSE
+      // Stream Elements
+      const searchBox = document.getElementById(`${msgId}-search-box`);
+      const searchText = document.getElementById(`${msgId}-search-text`);
       const thinkingBox = document.getElementById(`${msgId}-thinking-box`);
+      const thinkingStatus = document.getElementById(`${msgId}-thinking-status`);
       const thinkingContent = document.getElementById(`${msgId}-thinking-content`);
       const textContent = document.getElementById(`${msgId}-text-content`);
       const footer = document.getElementById(`${msgId}-footer`);
@@ -633,6 +751,10 @@ for chunk in response:
       const thinkingEnabled = document.getElementById('chat-thinking').checked;
       const boostEnabled = document.getElementById('chat-boost').checked;
       const searchEnabled = document.getElementById('chat-search').checked;
+
+      if (searchEnabled) {
+        searchBox.classList.remove('hidden');
+      }
 
       try {
         const response = await fetch('/api/chat', {
@@ -666,7 +788,7 @@ for chunk in response:
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
-          buffer = lines.pop(); // keep last incomplete line
+          buffer = lines.pop();
 
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
@@ -678,24 +800,33 @@ for chunk in response:
               if (payload.session_id) currentSessionId = payload.session_id;
               if (payload.token_used) accountTag.innerHTML = `<i class="fa-solid fa-shield-halved text-[10px]"></i> Akun: <b>${payload.token_used}</b>`;
 
-              if (payload.type === 'thinking') {
+              if (payload.type === 'search_status') {
+                searchBox.classList.remove('hidden');
+                searchText.innerText = 'Menelusuri informasi web: ' + payload.content;
+              } else if (payload.type === 'search_results') {
+                searchBox.classList.remove('hidden');
+                try {
+                  const sources = JSON.parse(payload.content);
+                  searchText.innerHTML = `✅ Ditemukan <b>${sources.length}</b> referensi web terpercaya.`;
+                } catch(e) {}
+              } else if (payload.type === 'thinking') {
                 thinkingBox.classList.remove('hidden');
                 fullThinking += payload.content;
                 thinkingContent.innerText = fullThinking;
               } else if (payload.type === 'text') {
+                thinkingStatus.innerText = 'Selesai bernalar';
+                thinkingStatus.classList.remove('animate-pulse');
                 fullText += payload.content;
-                textContent.innerHTML = marked.parse(fullText);
+                textContent.innerHTML = cleanRenderMarkdown(fullText);
               }
               container.scrollTop = container.scrollHeight;
-            } catch (e) {
-              // skip parse error
-            }
+            } catch (e) {}
           }
         }
 
         footer.classList.remove('hidden');
         if (!fullText && fullThinking) {
-          textContent.innerHTML = marked.parse(fullThinking);
+          textContent.innerHTML = cleanRenderMarkdown(fullThinking);
         }
 
       } catch (err) {
@@ -706,7 +837,7 @@ for chunk in response:
       }
     }
 
-    // Keyboard trigger on prompt input
+    // Enter Key
     document.getElementById('prompt-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();

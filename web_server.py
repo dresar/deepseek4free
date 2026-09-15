@@ -46,10 +46,10 @@ HTML_FILE_PATH = BASE_DIR / "web" / "index.html"
 
 class PlaygroundChatRequest(BaseModel):
     prompt: str
-    model: str = "deepseek-chat"
+    model: str = "deepseek-reasoner"
     thinking_enabled: bool = True
     boost_enabled: bool = False
-    search_enabled: bool = False
+    search_enabled: bool = True
     session_id: Optional[str] = None
 
 
