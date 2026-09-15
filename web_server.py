@@ -210,6 +210,12 @@ async def serve_static(filename: str):
     return PlainTextResponse(file_path.read_text(encoding="utf-8"), media_type=media_type)
 
 
+@app.get("/favicon.ico")
+async def favicon():
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs><text x="8" y="23" font-size="18" fill="white">🤖</text></svg>'
+    return PlainTextResponse(svg, media_type="image/svg+xml")
+
+
 @app.get("/health")
 async def health_check():
     status = pool.get_status()
