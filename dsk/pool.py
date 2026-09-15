@@ -368,17 +368,23 @@ class DeepSeekPool:
         return True
 
     def remove_token(self, token: str, save_to_file: bool = False) -> bool:
-        """Remove a token from the pool. Returns True if removed."""
         clean_token = token.strip().strip('"').strip("'")
         with self._lock:
-            entry = self._tokens_map.pop(clean_token, None)
+            entry = self._tokens_map.get(clean_token)
+            if not entry:
+                for e in self._tokens:
+                    if e.name == clean_token or TokenEntry.mask_token(e.token) == clean_token:
+                        entry = e
+                        break
             if not entry:
                 return False
-            self._tokens = [e for e in self._tokens if e.token != clean_token]
+            raw_token = entry.token
+            self._tokens_map.pop(raw_token, None)
+            self._tokens = [e for e in self._tokens if e.token != raw_token]
             self._session_to_token = {
-                sess: tok for sess, tok in self._session_to_token.items() if tok != clean_token
+                sess: tok for sess, tok in self._session_to_token.items() if tok != raw_token
             }
-            if self.last_used_token == clean_token:
+            if self.last_used_token == raw_token:
                 self.last_used_token = None
 
         if save_to_file and self.source_file:
@@ -754,18 +760,18 @@ class DeepSeekPool:
         candidate_files: List[Path] = [
             Path("tokens.txt"),
             Path("tokens.json"),
-            Path(".env"),
             Path("tokens.txt.example"),
             Path("tokens.json.example"),
             Path(__file__).resolve().parent.parent / "tokens.txt",
             Path(__file__).resolve().parent.parent / "tokens.json",
-            Path(__file__).resolve().parent.parent / ".env",
         ]
         if sources:
             for s in sources:
                 candidate_files.append(Path(s))
 
         token_regex = re.compile(r'([A-Za-z0-9_\-\+\/]{20,128})')
+        ignored_names = {"AUTO_UPDATE_INTERVAL", "AUTH_SECRET_KEY", "ADMIN_PASSWORD", "ADMIN_USERNAME", "DATABASE_PATH", "TOKENS_FILE"}
+        secret_hash = os.getenv("AUTH_SECRET_KEY", "")
 
         for cpath in candidate_files:
             if cpath.exists() and cpath.is_file():
@@ -794,8 +800,11 @@ class DeepSeekPool:
                                         line = line.split(marker, 1)[0].strip()
                                 matches = token_regex.findall(line)
                                 for match in matches:
-                                    if len(match) >= 20 and not match.startswith("http"):
-                                        discovered_tokens.add(match)
+                                    if len(match) >= 20 and not match.startswith("http") and match not in ignored_names:
+                                        if secret_hash and match == secret_hash:
+                                            continue
+                                        if not match.isupper():
+                                            discovered_tokens.add(match)
                 except Exception:
                     pass
 
@@ -804,7 +813,7 @@ class DeepSeekPool:
             env_val = os.getenv(env_key)
             if env_val:
                 for match in token_regex.findall(env_val):
-                    if len(match) >= 20:
+                    if len(match) >= 20 and match not in ignored_names and not match.isupper():
                         discovered_tokens.add(match)
 
         added_count = 0
@@ -871,16 +880,11 @@ class DeepSeekPool:
         max_retries: Optional[int] = None,
         new_session: bool = False,
         boost: bool = False,
+        selected_token: Optional[str] = None,
         **kwargs: Any
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Send a chat message with automatic token rotation, session affinity, smart failover, and streaming.
-
-        Compatible with DeepSeekAPI.chat_completion signatures:
-          pool.chat_completion("What is 2+2?")
-          pool.chat_completion(session_id, "What is 2+2?")
-          pool.chat_completion(prompt="What is 2+2?", thinking_enabled=True)
-          pool.chat_completion(prompt="What is 2+2?", boost=True)
         """
         if boost or self._boost_enabled:
             yield from self.boost_completion(
@@ -913,9 +917,20 @@ class DeepSeekPool:
 
         effective_max_retries = max_retries if max_retries is not None else min(max(self.max_retries, 1), max(pool_size, 1))
 
-        # Check session affinity: does actual_session_id belong to a specific token?
+        # Check explicit user selection or session affinity
         preferred_entry: Optional[TokenEntry] = None
-        if actual_session_id:
+        if selected_token and selected_token.strip() and selected_token != "auto":
+            clean_sel = selected_token.strip().strip('"').strip("'")
+            with self._lock:
+                if clean_sel in self._tokens_map:
+                    preferred_entry = self._tokens_map[clean_sel]
+                else:
+                    for e in self._tokens:
+                        if e.name == clean_sel or TokenEntry.mask_token(e.token) == clean_sel or e.token.startswith(clean_sel):
+                            preferred_entry = e
+                            break
+
+        if preferred_entry is None and actual_session_id:
             with self._lock:
                 owner_token_str = self._session_to_token.get(actual_session_id)
                 if owner_token_str and owner_token_str in self._tokens_map:

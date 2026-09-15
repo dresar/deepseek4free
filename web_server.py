@@ -136,6 +136,8 @@ class PlaygroundChatRequest(BaseModel):
     boost_enabled: bool = False
     search_enabled: bool = True
     session_id: Optional[str] = None
+    skill_id: Optional[str] = None
+    account: Optional[str] = None
 
 
 class AddTokensRequest(BaseModel):
@@ -147,9 +149,33 @@ class RemoveTokenRequest(BaseModel):
     token: str
 
 
+class TestTokenRequest(BaseModel):
+    token: str
+
+
+class GenerateApiKeyRequest(BaseModel):
+    name: str = "Default Key"
+
+
+class ToggleApiKeyRequest(BaseModel):
+    active: bool
+
+
+class InstallSkillRequest(BaseModel):
+    name: str
+    icon: str = "fa-solid fa-wand-magic-sparkles"
+    description: str
+    system_prompt: str
+
+
+class ToggleSkillRequest(BaseModel):
+    is_active: bool
+
+
 class SettingsRequest(BaseModel):
     strategy: Optional[str] = None
     boost_enabled: Optional[bool] = None
+    thinking_display: Optional[str] = None
 
 
 class OpenAIMessage(BaseModel):
@@ -172,6 +198,7 @@ class LoginRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -272,7 +299,12 @@ async def auth_change_password(req: ChangePasswordRequest, username: str = Depen
 
 @app.get("/api/status")
 async def get_pool_status(_: str = Depends(require_auth)):
-    return pool.get_status()
+    status = pool.get_status()
+    db_settings = db.get_settings()
+    status["thinking_display"] = db_settings.get("thinking_display", "hidden")
+    status["api_keys_count"] = len(db.get_api_keys())
+    status["skills_count"] = len(db.get_skills())
+    return status
 
 
 @app.post("/api/settings")
@@ -281,7 +313,15 @@ async def update_settings(req: SettingsRequest, _: str = Depends(require_auth)):
         pool.strategy = req.strategy
     if req.boost_enabled is not None:
         pool.set_boost(req.boost_enabled)
-    return {"status": "ok", "strategy": pool.strategy, "boost_enabled": pool.boost_enabled}
+    if req.thinking_display is not None:
+        db.update_settings({"thinking_display": req.thinking_display})
+    db_settings = db.get_settings()
+    return {
+        "status": "ok",
+        "strategy": pool.strategy,
+        "boost_enabled": pool.boost_enabled,
+        "thinking_display": db_settings.get("thinking_display", "hidden")
+    }
 
 
 @app.post("/api/tokens/add")
@@ -295,12 +335,14 @@ async def add_tokens(req: AddTokensRequest, _: str = Depends(require_auth)):
         if clean_tok:
             try:
                 pool.add_token(clean_tok)
+                db.upsert_token(clean_tok)
                 added += 1
             except Exception:
                 pass
     if req.save_disk:
         tokens_file = BASE_DIR / "tokens.txt"
         with open(tokens_file, "w", encoding="utf-8") as f:
+            f.write("# DeepSeek4Free Multi-Token Pool Database\n")
             for t in pool.get_tokens():
                 f.write(t + "\n")
     return {"status": "ok", "added": added, "total": len(pool.get_tokens())}
@@ -309,47 +351,159 @@ async def add_tokens(req: AddTokensRequest, _: str = Depends(require_auth)):
 @app.post("/api/tokens/remove")
 async def remove_token(req: RemoveTokenRequest, _: str = Depends(require_auth)):
     pool.remove_token(req.token)
+    db.remove_token(req.token)
+    tokens_file = BASE_DIR / "tokens.txt"
+    if tokens_file.exists():
+        with open(tokens_file, "w", encoding="utf-8") as f:
+            f.write("# DeepSeek4Free Multi-Token Pool Database\n")
+            for t in pool.get_tokens():
+                f.write(t + "\n")
     return {"status": "ok", "remaining": len(pool.get_tokens())}
+
+
+@app.post("/api/tokens/test")
+async def test_single_token(req: TestTokenRequest, _: str = Depends(require_auth)):
+    token = req.token.strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Token tidak boleh kosong")
+    loop = asyncio.get_event_loop()
+    start_time = time.time()
+    valid = await loop.run_in_executor(None, lambda: pool.validate_token(token))
+    latency_ms = int((time.time() - start_time) * 1000)
+    entry = pool._tokens_map.get(token)
+    error_msg = entry.last_error if entry else None
+    db.update_token_test(token, is_healthy=valid, latency_ms=latency_ms, error=error_msg)
+    return {
+        "status": "ok",
+        "valid": valid,
+        "latency_ms": latency_ms,
+        "error": error_msg,
+        "pool_status": pool.get_status()
+    }
+
+
+@app.post("/api/tokens/test-all")
+async def test_all_tokens(_: str = Depends(require_auth)):
+    loop = asyncio.get_event_loop()
+    results = await loop.run_in_executor(None, lambda: pool.validate_all_tokens(concurrent=True))
+    for entry in pool._tokens:
+        db.update_token_test(
+            entry.token,
+            is_healthy=entry.is_healthy(),
+            latency_ms=int(entry.latency_ms),
+            error=entry.last_error
+        )
+    return {
+        "status": "ok",
+        "results": results,
+        "pool_status": pool.get_status()
+    }
+
+
+@app.get("/api/keys")
+async def list_api_keys(_: str = Depends(require_auth)):
+    return {"status": "ok", "keys": db.get_api_keys()}
+
+
+@app.post("/api/keys/generate")
+async def generate_api_key(req: GenerateApiKeyRequest, _: str = Depends(require_auth)):
+    new_key = db.create_api_key(name=req.name)
+    return {"status": "ok", "key": new_key}
+
+
+@app.delete("/api/keys/{key_id}")
+async def revoke_api_key(key_id: str, _: str = Depends(require_auth)):
+    revoked = db.revoke_api_key(key_id)
+    return {"status": "ok", "revoked": revoked}
+
+
+@app.post("/api/keys/{key_id}/toggle")
+async def toggle_api_key_status(key_id: str, req: ToggleApiKeyRequest, _: str = Depends(require_auth)):
+    updated = db.toggle_api_key(key_id, req.active)
+    return {"status": "ok", "updated": updated}
+
+
+@app.get("/api/skills")
+async def list_skills(_: str = Depends(require_auth)):
+    return {"status": "ok", "skills": db.get_skills()}
+
+
+@app.post("/api/skills/install")
+async def install_skill(req: InstallSkillRequest, _: str = Depends(require_auth)):
+    if not req.name.strip() or not req.system_prompt.strip():
+        raise HTTPException(status_code=400, detail="Nama dan prompt skill wajib diisi")
+    new_skill = db.install_skill(
+        name=req.name,
+        icon=req.icon,
+        description=req.description,
+        system_prompt=req.system_prompt
+    )
+    return {"status": "ok", "skill": new_skill}
+
+
+@app.post("/api/skills/{skill_id}/toggle")
+async def toggle_skill_active(skill_id: str, req: ToggleSkillRequest, _: str = Depends(require_auth)):
+    updated = db.toggle_skill(skill_id, req.is_active)
+    return {"status": "ok", "updated": updated}
+
+
+@app.delete("/api/skills/{skill_id}")
+async def delete_skill(skill_id: str, _: str = Depends(require_auth)):
+    deleted = db.delete_skill(skill_id)
+    return {"status": "ok", "deleted": deleted}
 
 
 @app.post("/api/learn")
 async def run_learn(_: str = Depends(require_auth)):
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, lambda: pool.learn(benchmark=True, auto_add=True))
+    for entry in pool._tokens:
+        db.upsert_token(entry.token, label=entry.name, status=entry.status.value)
     return result
 
 
 @app.get("/api/export")
 async def export_tokens(_: str = Depends(require_auth)):
-    content = "\n".join(pool.get_tokens()) + "\n"
+    content = "# DeepSeek4Free Multi-Token Pool Database\n" + "\n".join(pool.get_tokens()) + "\n"
     return PlainTextResponse(
         content,
         headers={"Content-Disposition": "attachment; filename=tokens.txt"}
     )
 
 
+
 @app.post("/api/chat")
 async def playground_chat(req: PlaygroundChatRequest, _: str = Depends(require_auth)):
     thinking_enabled = req.thinking_enabled or (req.model == "deepseek-reasoner")
+
+    active_skills_prompt = db.get_active_skills_prompt()
+    effective_prompt = req.prompt
+    if active_skills_prompt:
+        effective_prompt = f"[System Instructions & Active Skills:\n{active_skills_prompt}]\n\n{req.prompt}"
 
     def event_generator():
         try:
             if req.boost_enabled:
                 stream = pool.boost_completion(
-                    prompt=req.prompt,
+                    prompt=effective_prompt,
                     chat_session_id=req.session_id,
                     thinking_enabled=thinking_enabled,
                     search_enabled=req.search_enabled
                 )
             else:
                 stream = pool.chat_completion(
-                    prompt=req.prompt,
+                    prompt=effective_prompt,
                     chat_session_id=req.session_id,
                     thinking_enabled=thinking_enabled,
-                    search_enabled=req.search_enabled
+                    search_enabled=req.search_enabled,
+                    selected_token=req.account
                 )
 
-            token_used = pool.last_used_token or "pool"
+            token_display = "DeepSeek AI"
+            if pool.last_used_token:
+                entry = pool._tokens_map.get(pool.last_used_token)
+                if entry:
+                    token_display = entry.name or TokenEntry.mask_token(entry.token)
             session_id = pool.last_used_session_id or req.session_id
 
             for chunk in stream:
@@ -360,7 +514,7 @@ async def playground_chat(req: PlaygroundChatRequest, _: str = Depends(require_a
                         "type": c_type,
                         "content": content,
                         "session_id": session_id,
-                        "token_used": token_used
+                        "token_used": token_display
                     }
                     yield f"data: {json.dumps(payload)}\n\n"
 
@@ -380,40 +534,52 @@ async def playground_chat(req: PlaygroundChatRequest, _: str = Depends(require_a
 
 @app.get("/v1/models")
 @app.get("/models")
+@app.get("/anthropic/v1/models")
 async def list_models():
     now = int(time.time())
+    model_ids = [
+        "deepseek-reasoner",
+        "deepseek-chat",
+        "claude-3-7-sonnet",
+        "claude-3-5-sonnet",
+        "gpt-4o",
+        "o1",
+        "o3-mini"
+    ]
     return {
         "object": "list",
         "data": [
             {
-                "id": "deepseek-chat",
+                "id": mid,
                 "object": "model",
                 "created": now,
                 "owned_by": "deepseek4free",
                 "permission": [],
-                "root": "deepseek-chat",
-                "parent": None
-            },
-            {
-                "id": "deepseek-reasoner",
-                "object": "model",
-                "created": now,
-                "owned_by": "deepseek4free",
-                "permission": [],
-                "root": "deepseek-reasoner",
+                "root": mid,
                 "parent": None
             }
+            for mid in model_ids
         ]
     }
 
 
 @app.post("/v1/chat/completions")
 @app.post("/chat/completions")
-async def openai_chat_completions(req: OpenAIChatRequest):
+async def openai_chat_completions(req: OpenAIChatRequest, request: Request):
+    auth_header = request.headers.get("Authorization", "")
+    key = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+    db_keys = db.get_api_keys()
+    if db_keys and key not in ("sk-deepseek4free", AUTH_SECRET_KEY) and not db.validate_api_key(key):
+        raise HTTPException(status_code=401, detail="Invalid API Key. Please generate an API key from the DeepSeek4Free dashboard.")
+
     if not req.messages:
         raise HTTPException(status_code=400, detail="messages list cannot be empty")
 
     prompt_parts = []
+    active_skills_prompt = db.get_active_skills_prompt()
+    if active_skills_prompt:
+        prompt_parts.append(f"[System Instructions & Active Skills:\n{active_skills_prompt}]")
+
     for msg in req.messages:
         if msg.role == "system":
             prompt_parts.append(f"[System instruction: {msg.content}]")
@@ -423,7 +589,8 @@ async def openai_chat_completions(req: OpenAIChatRequest):
             prompt_parts.append(f"[Assistant previously: {msg.content}]")
 
     full_prompt = "\n\n".join(prompt_parts)
-    thinking_enabled = req.model == "deepseek-reasoner"
+    model_name = (req.model or "deepseek-reasoner").lower()
+    thinking_enabled = ("reasoner" in model_name or "r1" in model_name or "o1" in model_name or "o3" in model_name or "claude" in model_name or "sonnet" in model_name)
     req_id = f"chatcmpl-{int(time.time() * 1000)}"
     created_time = int(time.time())
 
@@ -511,16 +678,32 @@ async def anthropic_messages(request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
+    auth_header = request.headers.get("Authorization", "")
+    key = ""
+    if auth_header.startswith("Bearer "):
+        key = auth_header[7:].strip()
+    elif "x-api-key" in request.headers:
+        key = request.headers["x-api-key"].strip()
+
+    db_keys = db.get_api_keys()
+    if db_keys and key not in ("sk-deepseek4free", AUTH_SECRET_KEY) and not db.validate_api_key(key):
+        raise HTTPException(status_code=401, detail="Invalid API Key. Please generate an API key from the DeepSeek4Free dashboard.")
+
     messages = body.get("messages", [])
     if not messages:
         raise HTTPException(status_code=400, detail="messages list cannot be empty")
 
     system_prompt = body.get("system", "")
     stream = body.get("stream", False)
-    model = body.get("model", "deepseek-chat")
-    thinking_enabled = "reasoner" in model or "r1" in model.lower()
+    model = body.get("model", "deepseek-reasoner")
+    model_lower = str(model).lower()
+    thinking_enabled = ("reasoner" in model_lower or "r1" in model_lower or "claude" in model_lower or "sonnet" in model_lower or "o1" in model_lower or "o3" in model_lower)
 
     prompt_parts = []
+    active_skills_prompt = db.get_active_skills_prompt()
+    if active_skills_prompt:
+        prompt_parts.append(f"[System Instructions & Active Skills:\n{active_skills_prompt}]")
+
     if system_prompt:
         prompt_parts.append(f"[System instruction: {system_prompt}]")
     for msg in messages:

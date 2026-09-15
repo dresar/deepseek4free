@@ -28,9 +28,23 @@
         <span>Playground</span>
       </button>
       <button id="tab-pool" class="nav-tab" onclick="switchTab('pool')">
-        <span class="tab-icon"><i class="fa-solid fa-server"></i></span>
-        <span>Pool</span>
+        <span class="tab-icon"><i class="fa-solid fa-database"></i></span>
+        <span>Database Token</span>
         <span class="tab-badge" id="badge-total">0</span>
+      </button>
+      <button id="tab-keys" class="nav-tab" onclick="switchTab('keys')">
+        <span class="tab-icon"><i class="fa-solid fa-key"></i></span>
+        <span>Kunci API</span>
+        <span class="tab-badge" id="badge-keys" style="display:none">0</span>
+      </button>
+      <button id="tab-skills" class="nav-tab" onclick="switchTab('skills')">
+        <span class="tab-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span>Skills</span>
+        <span class="tab-badge" id="badge-skills" style="display:none">0</span>
+      </button>
+      <button id="tab-docs" class="nav-tab" onclick="switchTab('docs')">
+        <span class="tab-icon"><i class="fa-solid fa-book-bookmark"></i></span>
+        <span>Dokumentasi API</span>
       </button>
       <button id="tab-settings" class="nav-tab" onclick="switchTab('settings')">
         <span class="tab-icon"><i class="fa-solid fa-sliders"></i></span>
@@ -70,6 +84,13 @@
             </select>
           </div>
 
+          <div class="control-group">
+            <span class="control-label">Akun</span>
+            <select id="chat-account" class="select-input" title="Pilih akun DeepSeek spesifik atau gunakan Pool otomatis">
+              <option value="auto">Otomatis (Pool)</option>
+            </select>
+          </div>
+
           <label class="toggle-chip active-purple" data-active-class="active-purple">
             <input type="checkbox" id="chat-thinking" checked>
             <i class="fa-solid fa-brain"></i> Thinking
@@ -104,15 +125,22 @@
         </div>
       </div>
 
-      <div class="input-area">
+      <div class="input-area" id="input-drop-zone">
+        <!-- Container untuk file & gambar yang dilampirkan -->
+        <div id="attached-files-container" class="attached-files-container" style="display:none"></div>
+
         <div class="input-box">
-          <textarea id="prompt-input" class="prompt-textarea" rows="2" placeholder="Tanya apa saja..."></textarea>
+          <button type="button" id="btn-attach" class="btn-attach" onclick="triggerFileInput()" title="Lampirkan File / Dokumen / Kode / Gambar">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <input type="file" id="chat-file-input" multiple style="display:none" onchange="handleFileSelect(event)">
+          <textarea id="prompt-input" class="prompt-textarea" rows="2" placeholder="Tanya apa saja, ketik atau tempelkan (Ctrl+V) file/gambar..."></textarea>
           <button id="btn-send" class="btn-send" onclick="sendMessage()">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
         <div class="input-hint">
-          <span>Enter kirim · Shift+Enter baris baru</span>
+          <span>Enter kirim · Shift+Enter baris baru · Drag &amp; Drop / Ctrl+V file</span>
           <span>⚡ Pool Router Aktif</span>
         </div>
       </div>
@@ -162,16 +190,19 @@
             <span style="font-size:10px;color:var(--text-muted);font-weight:400">Strategi: <b id="stat-strategy" style="color:var(--text-secondary)">round_robin</b></span>
           </div>
           <div class="panel-actions">
+            <button id="btn-test-all" onclick="testAllTokens()" class="btn-primary" style="background:var(--accent-indigo);border-color:var(--accent-indigo)">
+              <i class="fa-solid fa-bolt"></i> Test Semua
+            </button>
             <button onclick="openModalAddToken()" class="btn-primary">
               <i class="fa-solid fa-plus"></i> Tambah
             </button>
             <button id="btn-learn" onclick="triggerLearn()" class="btn-learn">
               <i class="fa-solid fa-brain"></i> /learn
             </button>
-            <button onclick="fetchPoolStatus()" class="btn-secondary">
+            <button onclick="fetchPoolStatus()" class="btn-secondary" title="Muat Ulang">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
-            <a href="/api/export" download="tokens.txt" class="btn-secondary" style="text-decoration:none">
+            <a href="/api/export" download="tokens.txt" class="btn-secondary" style="text-decoration:none" title="Download tokens.txt">
               <i class="fa-solid fa-download"></i>
             </a>
           </div>
@@ -182,10 +213,10 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Akun</th>
+                <th>Akun Token</th>
                 <th>Status</th>
                 <th>Latensi</th>
-                <th>OK/Total</th>
+                <th>OK / Total</th>
                 <th>Error</th>
                 <th style="text-align:right">Aksi</th>
               </tr>
@@ -198,6 +229,251 @@
       </div>
     </section>
 
+    <!-- VIEW: API KEYS -->
+    <section id="view-keys" class="view-section view-keys hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-key color-purple"></i>
+            Manajemen Kunci API
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">Generate API key untuk Cursor, Cline, Claude Code, dan SDK pihak ketiga</span>
+          </div>
+          <div class="panel-actions">
+            <button onclick="openModalGenerateKey()" class="btn-primary">
+              <i class="fa-solid fa-plus"></i> Generate Kunci Baru
+            </button>
+            <button onclick="fetchApiKeys()" class="btn-secondary" title="Refresh">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama / Label</th>
+                <th>Kunci API</th>
+                <th>Dibuat</th>
+                <th>Total Request</th>
+                <th>Terakhir Dipakai</th>
+                <th>Status</th>
+                <th style="text-align:right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="keys-tbody">
+              <tr><td colspan="7" class="empty-state">Memuat kunci API...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-terminal color-emerald"></i> Panduan Integrasi Cepat (OpenAI SDK &amp; Claude)</div>
+        </div>
+        <div style="padding:16px">
+          <div class="api-box">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">Base URL (OpenAI / Cursor / Cline)</div>
+                <div class="api-key-value" id="api-base-url-keys">http://localhost:8990/v1</div>
+              </div>
+              <button onclick="copyToClipboard(document.getElementById('api-base-url-keys').textContent)" class="btn-copy">Salin</button>
+            </div>
+            <hr class="api-divider">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">Base URL (Claude / Anthropic)</div>
+                <div class="api-key-value" id="api-anthropic-url-keys">http://localhost:8990/anthropic/v1</div>
+              </div>
+              <button onclick="copyToClipboard(document.getElementById('api-anthropic-url-keys').textContent)" class="btn-copy">Salin</button>
+            </div>
+            <hr class="api-divider">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label">Model Tersedia</div>
+                <div style="color:var(--accent-sky);font-size:12px">deepseek-reasoner (R1 Reasoning) · deepseek-chat (V3 Ultra Cepat)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: SKILLS -->
+    <section id="view-skills" class="view-section view-skills hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-wand-magic-sparkles color-sky"></i>
+            Skills &amp; AI Personas
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">Pasang skill untuk memberikan keahlian khusus ke DeepSeek</span>
+          </div>
+          <div class="panel-actions">
+            <button onclick="openModalInstallSkill()" class="btn-primary">
+              <i class="fa-solid fa-plus"></i> Pasang Skill Baru
+            </button>
+            <button onclick="fetchSkills()" class="btn-secondary" title="Refresh">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="padding:16px">
+          <div id="skills-grid" class="skills-grid">
+            <div class="empty-state">Memuat daftar skill...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: DOKUMENTASI API -->
+    <section id="view-docs" class="view-section view-docs hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-book-bookmark color-sky"></i>
+            Dokumentasi API &amp; Integrasi Router
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">Gunakan DeepSeek4Free di 9Router, Cursor, Cline, OpenCode, dan skrip otomatisasi</span>
+          </div>
+        </div>
+
+        <div style="padding:16px;display:flex;flex-direction:column;gap:18px">
+          <!-- Quick Status Card -->
+          <div class="api-box" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;padding:16px">
+            <div>
+              <div class="api-key-label"><i class="fa-solid fa-bolt color-sky"></i> Model Utama (Direkomendasikan)</div>
+              <div style="font-size:13px;font-weight:700;color:var(--accent-sky);margin-top:2px">deepseek-reasoner (R1)</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Deep Thinking penalaran cerdas &amp; anti-halusinasi</div>
+            </div>
+            <div>
+              <div class="api-key-label"><i class="fa-solid fa-server color-purple"></i> Model Cepat (V3)</div>
+              <div style="font-size:13px;font-weight:700;color:var(--accent-purple);margin-top:2px">deepseek-chat (V3)</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Latensi ultra-rendah untuk chat cepat &amp; ringkasan</div>
+            </div>
+            <div>
+              <div class="api-key-label"><i class="fa-solid fa-key color-emerald"></i> API Key Default</div>
+              <div style="font-size:13px;font-weight:700;color:var(--accent-emerald);font-family:'JetBrains Mono',monospace;margin-top:2px">sk-deepseek4free</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Atau gunakan custom key dari tab "Kunci API"</div>
+            </div>
+          </div>
+
+          <!-- Section 1: OpenAI Compatible -->
+          <div class="panel" style="margin:0;border:1px solid var(--border)">
+            <div class="panel-header" style="background:var(--bg-card)">
+              <div class="panel-title" style="font-size:13px">
+                <i class="fa-solid fa-network-wired color-emerald"></i> 1. OpenAI-Compatible API (/v1/chat/completions)
+              </div>
+              <button onclick="copyToClipboard(`curl -X POST http://localhost:8990/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer sk-deepseek4free' -d '{\n  \"model\": \"deepseek-reasoner\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Halo DeepSeek R1!\"}],\n  \"stream\": true\n}'`)" class="btn-copy">Salin cURL</button>
+            </div>
+            <div style="padding:14px">
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Endpoint standar OpenAI. Cocok untuk Cursor, Cline, Roo Code, LibreChat, dan 9Router:</p>
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code>curl -X POST http://localhost:8990/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-deepseek4free" \
+  -d '{
+    "model": "deepseek-reasoner",
+    "messages": [
+      {"role": "user", "content": "Halo DeepSeek R1!"}
+    ],
+    "stream": true
+  }'</code></pre>
+            </div>
+          </div>
+
+          <!-- Section 2: Claude / Anthropic Compatible -->
+          <div class="panel" style="margin:0;border:1px solid var(--border)">
+            <div class="panel-header" style="background:var(--bg-card)">
+              <div class="panel-title" style="font-size:13px">
+                <i class="fa-solid fa-brain color-purple"></i> 2. Anthropic / Claude Messages API (/anthropic/v1/messages)
+              </div>
+              <button onclick="copyToClipboard(`curl -X POST http://localhost:8990/anthropic/v1/messages -H 'Content-Type: application/json' -H 'x-api-key: sk-deepseek4free' -H 'anthropic-version: 2023-06-01' -d '{\n  \"model\": \"deepseek-reasoner\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Halo dari Claude API format!\"}],\n  \"max_tokens\": 4096,\n  \"stream\": true\n}'`)" class="btn-copy">Salin cURL</button>
+            </div>
+            <div style="padding:14px">
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Mendukung format pesan Anthropic Claude (header <code>x-api-key</code> atau <code>Authorization: Bearer</code>):</p>
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-purple);overflow-x:auto;border:1px solid var(--border)"><code>curl -X POST http://localhost:8990/anthropic/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: sk-deepseek4free" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "deepseek-reasoner",
+    "messages": [
+      {"role": "user", "content": "Halo dari Claude API format!"}
+    ],
+    "max_tokens": 4096,
+    "stream": true
+  }'</code></pre>
+            </div>
+          </div>
+
+          <!-- Section 3: 9Router & IDE Config -->
+          <div class="panel" style="margin:0;border:1px solid var(--border)">
+            <div class="panel-header" style="background:var(--bg-card)">
+              <div class="panel-title" style="font-size:13px">
+                <i class="fa-solid fa-route color-amber"></i> 3. Konfigurasi 9Router &amp; Cursor / Cline
+              </div>
+            </div>
+            <div style="padding:14px;font-size:12px;color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+              <div>
+                <strong style="color:var(--text-primary)">Integrasi ke Cursor IDE:</strong>
+                <ol style="margin-left:18px;margin-top:4px;line-height:1.6">
+                  <li>Buka Settings di Cursor &rarr; <b>Models</b>.</li>
+                  <li>Di bagian <b>OpenAI API Key</b>, masukkan <code>sk-deepseek4free</code>.</li>
+                  <li>Aktifkan <b>Override OpenAI Base URL</b> dan isi dengan: <code>http://localhost:8990/v1</code></li>
+                  <li>Tambahkan model baru bernama: <code>deepseek-reasoner</code> dan jadikan default.</li>
+                </ol>
+              </div>
+              <hr style="border:none;border-top:1px solid var(--border)">
+              <div>
+                <strong style="color:var(--text-primary)">Integrasi ke 9Router Combo Fallback:</strong>
+                <p style="margin-top:4px;color:var(--text-muted)">Tambahkan node DeepSeek4Free ke konfigurasi 9Router sebagai primary reasoner:</p>
+                <pre style="background:var(--bg-input);padding:10px;border-radius:var(--radius-md);margin-top:6px;font-size:11.5px;color:var(--accent-amber)"><code>{
+  "provider": "openai",
+  "name": "deepseek4free-r1",
+  "baseUrl": "http://localhost:8990/v1",
+  "apiKey": "sk-deepseek4free",
+  "model": "deepseek-reasoner",
+  "priority": 1,
+  "weight": 100
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Python SDK -->
+          <div class="panel" style="margin:0;border:1px solid var(--border)">
+            <div class="panel-header" style="background:var(--bg-card)">
+              <div class="panel-title" style="font-size:13px">
+                <i class="fa-brands fa-python color-sky"></i> 4. Contoh Pemanggilan Python (OpenAI SDK)
+              </div>
+              <button onclick="copyToClipboard(`from openai import OpenAI\n\nclient = OpenAI(\n    base_url='http://localhost:8990/v1',\n    api_key='sk-deepseek4free'\n)\n\nresponse = client.chat.completions.create(\n    model='deepseek-reasoner',\n    messages=[{'role': 'user', 'content': 'Jelaskan cara kerja multi-account pool.'}],\n    stream=True\n)\n\nfor chunk in response:\n    if chunk.choices and chunk.choices[0].delta.content:\n        print(chunk.choices[0].delta.content, end='', flush=True)\n`)" class="btn-copy">Salin Python</button>
+            </div>
+            <div style="padding:14px">
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code>from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8990/v1",
+    api_key="sk-deepseek4free"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[{"role": "user", "content": "Jelaskan cara kerja multi-account pool."}],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)</code></pre>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: SETTINGS -->
     <section id="view-settings" class="view-section view-settings hidden">
       <div class="panel">
         <div class="panel-header">
@@ -219,6 +495,14 @@
               <option value="true">Aktif (Hedged Racing)</option>
             </select>
             <span class="form-helper">Balapan 2 akun tercepat untuk latensi rendah</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nalar DeepSeek R1 (Thinking Display)</label>
+            <select id="setting-thinking-display" class="form-select">
+              <option value="hidden" selected>Tersembunyi di Latar Belakang (Direkomendasikan)</option>
+              <option value="visible">Tampilkan Kotak Nalar</option>
+            </select>
+            <span class="form-helper">Hasil loading langsung ke jawaban, proses nalar jalan di background</span>
           </div>
         </div>
         <div class="form-actions">
@@ -303,6 +587,82 @@
   </div>
 </div>
 
+<!-- MODAL: GENERATE API KEY -->
+<div id="modal-generate-key" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-key color-purple"></i> Generate Kunci API Baru</div>
+      <button onclick="closeModalGenerateKey()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nama Klien / Peruntukan</label>
+        <input type="text" id="input-key-name" class="form-input" placeholder="contoh: Cursor IDE, Cline, Claude Dev" value="Cursor IDE">
+        <span class="form-helper">Beri nama agar Anda mudah mengenali penggunaan kunci ini.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalGenerateKey()" class="btn-secondary">Batal</button>
+      <button id="btn-submit-generate-key" onclick="submitGenerateKey()" class="btn-primary">Generate Kunci</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KEY GENERATED RESULT -->
+<div id="modal-key-result" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-circle-check color-emerald"></i> Kunci API Berhasil Dibuat!</div>
+      <button onclick="closeModalKeyResult()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Salin kunci API Anda sekarang. Kunci ini siap digunakan untuk SDK dan tools koding:</p>
+      <div class="api-box" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px">
+        <span id="text-new-key-value" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-sky);word-break:break-all">dsk-live-...</span>
+        <button onclick="copyToClipboard(document.getElementById('text-new-key-value').textContent)" class="btn-copy">Salin</button>
+      </div>
+      <p style="font-size:11px;color:var(--accent-amber);margin-top:10px">
+        <i class="fa-solid fa-triangle-exclamation"></i> Kunci ini tersimpan aman di database lokal DeepSeek4Free.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalKeyResult()" class="btn-primary">Selesai</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: INSTALL SKILL -->
+<div id="modal-install-skill" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-wand-magic-sparkles color-sky"></i> Pasang Skill Baru</div>
+      <button onclick="closeModalInstallSkill()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nama Skill</label>
+        <input type="text" id="input-skill-name" class="form-input" placeholder="contoh: SEO Copywriter Pro">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon (FontAwesome Class atau Emoji)</label>
+        <input type="text" id="input-skill-icon" class="form-input" placeholder="contoh: fa-solid fa-pen-nib atau ✍️" value="fa-solid fa-wand-magic-sparkles">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi Singkat</label>
+        <input type="text" id="input-skill-desc" class="form-input" placeholder="contoh: Ahli membuat artikel SEO-friendly berbobot tinggi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">System Prompt / Instruksi Skill</label>
+        <textarea id="input-skill-prompt" class="form-textarea" rows="5" placeholder="Tulis instruksi persona dan gaya kerja AI di sini..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalInstallSkill()" class="btn-secondary">Batal</button>
+      <button id="btn-submit-skill" onclick="submitInstallSkill()" class="btn-primary">Pasang Skill</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-change-pass" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-header">
@@ -332,6 +692,8 @@
 
 <div id="toast-container" class="toast-container"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="/web/auth.js"></script>
 <script src="/web/app.js"></script>
 </body>

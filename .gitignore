@@ -10,8 +10,14 @@ __pycache__/
 cookies.txt
 dsk/cookies.json
 .env
+.env.*
 tokens.txt
 tokens.json
+data/
+*.db
+*.sqlite
+*.sqlite3
+db.json
 # Node & Next.js
 node_modules/
 .next/

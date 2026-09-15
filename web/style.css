@@ -555,7 +555,7 @@ html, body {
   background: transparent;
   border: none;
   outline: none;
-  padding: 12px 52px 12px 16px;
+  padding: 12px 52px 12px 48px;
   font-size: 13px;
   color: var(--text-primary);
   resize: none;
@@ -564,6 +564,101 @@ html, body {
 }
 
 .prompt-textarea::placeholder { color: var(--text-muted); }
+
+.btn-attach {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.18s;
+}
+
+.btn-attach:hover {
+  color: var(--accent-sky);
+  border-color: var(--accent-sky);
+  background: var(--accent-sky-dim);
+}
+
+.attached-files-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+}
+
+.attached-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-primary);
+  max-width: 260px;
+}
+
+.attached-file-chip .file-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.attached-file-chip .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.attached-file-chip .file-size {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.attached-file-chip .file-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 11px;
+}
+
+.attached-file-chip .file-remove:hover {
+  color: var(--accent-rose);
+}
+
+.input-area.drag-over {
+  outline: 2px dashed var(--accent-sky);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
+}
+
+.chat-attached-image {
+  max-width: 260px;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  display: block;
+}
 
 .btn-send {
   position: absolute;
@@ -1002,9 +1097,254 @@ html, body {
 
 @media (max-width: 640px) {
   .app-header { padding: 0 12px; }
-  .view-pool, .view-settings { padding: 16px 12px; }
+  .view-pool, .view-settings, .view-keys, .view-skills { padding: 16px 12px; }
   .view-playground { padding: 12px; }
   .nav-tab span:not(.tab-badge) { display: none; }
   .status-pill .pill-label { display: none; }
   .brand-sub { display: none; }
 }
+
+/* ==========================================================================
+   Modern Reasoning Loader (Background Thinking - Concept Bersih)
+   ========================================================================== */
+.reasoning-loader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(192, 132, 252, 0.06);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.1); border-color: rgba(192, 132, 252, 0.2); }
+  50% { box-shadow: 0 0 14px 2px rgba(192, 132, 252, 0.18); border-color: rgba(192, 132, 252, 0.4); }
+}
+
+.reasoning-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: rgba(192, 132, 252, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--accent-purple);
+  flex-shrink: 0;
+}
+
+.reasoning-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reasoning-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.reasoning-subtitle {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Skills Grid & Cards
+   ========================================================================== */
+.view-keys, .view-skills {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.skill-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.skill-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.skill-card.active {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.05) 0%, var(--bg-card) 100%);
+}
+
+.skill-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.skill-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--accent-sky);
+  flex-shrink: 0;
+}
+
+.skill-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.skill-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.skill-prompt-toggle {
+  background: transparent;
+  border: none;
+  color: var(--accent-sky);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.skill-prompt-body {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-muted);
+  max-height: 90px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  margin-top: 6px;
+  display: none;
+}
+
+.skill-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* Modern Switch Toggle */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #1e293b;
+  transition: .25s;
+  border-radius: 34px;
+  border: 1px solid var(--border);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #94a3b8;
+  transition: .25s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-sky);
+  border-color: var(--accent-sky);
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+  background-color: #ffffff;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  height: auto;
+}
+
+.badge-tag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.badge-builtin {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-sky);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.badge-custom {
+  background: rgba(192, 132, 252, 0.1);
+  color: var(--accent-purple);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+}
+
