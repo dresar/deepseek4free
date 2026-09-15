@@ -208,9 +208,9 @@ async def serve_index():
     return "<h1>web/index.html not found</h1>"
 
 
-@app.get("/.well-known/appspecific/{path:path}")
+@app.get("/.well-known/{path:path}")
 async def well_known(path: str):
-    raise HTTPException(status_code=404)
+    return {}
 
 
 

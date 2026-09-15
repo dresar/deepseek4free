@@ -50,26 +50,23 @@ class DeepSeekAPI:
 
         if get_pkg_version:
             try:
-                curl_cffi_version = get_pkg_version('curl-cffi')
-                if curl_cffi_version != '0.8.1b9':
-                    print("\033[93mWarning: DeepSeek API requires curl-cffi version 0.8.1b9", file=sys.stderr)
-                    print("Please install the correct version using: pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
+                _ = get_pkg_version('curl-cffi')
             except PackageNotFoundError:
-                print("\033[93mWarning: curl-cffi not found. Please install version 0.8.1b9:", file=sys.stderr)
-                print("pip install curl-cffi==0.8.1b9\033[0m", file=sys.stderr)
+                print("\033[93mWarning: curl-cffi not found. Please install: pip install curl-cffi\033[0m", file=sys.stderr)
 
         self.auth_token = auth_token
         self.pow_solver = DeepSeekPOW()
 
-        # Load cookies from JSON file
+        # Load cookies from JSON file if present
         cookies_path = Path(__file__).parent / 'cookies.json'
-        try:
-            with open(cookies_path, 'r') as f:
-                cookie_data = json.load(f)
-                self.cookies = cookie_data.get('cookies', {})
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"\033[93mWarning: Could not load cookies from {cookies_path}: {e}\033[0m", file=sys.stderr)
-            self.cookies = {}
+        self.cookies = {}
+        if cookies_path.exists():
+            try:
+                with open(cookies_path, 'r', encoding='utf-8') as f:
+                    cookie_data = json.load(f)
+                    self.cookies = cookie_data.get('cookies', {})
+            except Exception:
+                self.cookies = {}
 
     def _get_headers(self, pow_response: Optional[str] = None) -> Dict[str, str]:
         headers = {
