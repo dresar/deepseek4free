@@ -33,13 +33,11 @@
     }
   </script>
   <style>
-    /* Custom scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0b0f17; }
     ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
     
-    /* Markdown Body Styling */
     .ai-rendered-content {
       color: #e2e8f0;
       line-height: 1.65;
@@ -118,7 +116,6 @@
 </head>
 <body class="bg-dark-900 text-gray-100 flex flex-col h-screen overflow-hidden font-sans">
 
-  <!-- Header / Top Bar -->
   <header class="h-14 border-b border-dark-700 bg-dark-800/90 backdrop-blur flex items-center justify-between px-5 shrink-0 z-20">
     <div class="flex items-center gap-3">
       <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
@@ -133,7 +130,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <nav class="flex items-center gap-1 bg-dark-900/80 p-1 rounded-lg border border-dark-700">
       <button onclick="switchTab('playground')" id="tab-playground" class="nav-tab px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 bg-dark-700 text-white shadow-sm">
         <i class="fa-solid fa-comments text-sky-400"></i> Playground
@@ -146,7 +142,6 @@
       </button>
     </nav>
 
-    <!-- Header Quick Status -->
     <div class="flex items-center gap-2">
       <div id="quick-boost-indicator" class="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium">
         <i class="fa-solid fa-bolt text-amber-400"></i> BOOST: <span id="hdr-boost-status">OFF</span>
@@ -158,15 +153,11 @@
     </div>
   </header>
 
-  <!-- Main Workspace -->
   <main class="flex-1 overflow-hidden relative">
 
-    <!-- TAB 1: PLAYGROUND -->
     <section id="view-playground" class="h-full flex flex-col justify-between max-w-5xl mx-auto px-4 py-3">
-      <!-- Chat Controls / Options Strip -->
       <div class="flex items-center justify-between pb-2 border-b border-dark-700/60 text-xs text-gray-300 shrink-0">
         <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
-          <!-- Model Selection (Default: deepseek-reasoner R1) -->
           <div class="flex items-center gap-1.5">
             <span class="text-gray-400 text-[11px]">Model:</span>
             <select id="chat-model" class="bg-dark-800 border border-dark-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500 font-medium">
@@ -175,19 +166,16 @@
             </select>
           </div>
 
-          <!-- Thinking Toggle (Checked by default) -->
           <label class="flex items-center gap-1.5 cursor-pointer select-none bg-purple-950/30 px-2 py-1 rounded border border-purple-500/30">
             <input type="checkbox" id="chat-thinking" checked class="rounded bg-dark-700 border-dark-600 text-purple-500 focus:ring-0">
             <span class="text-purple-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-brain text-purple-400"></i> Deep Thinking</span>
           </label>
 
-          <!-- Web Search Toggle (Checked by default) -->
           <label class="flex items-center gap-1.5 cursor-pointer select-none bg-sky-950/30 px-2 py-1 rounded border border-sky-500/30">
             <input type="checkbox" id="chat-search" checked class="rounded bg-dark-700 border-dark-600 text-sky-500 focus:ring-0">
             <span class="text-sky-300 text-xs flex items-center gap-1 font-semibold"><i class="fa-solid fa-globe text-sky-400"></i> Web Search</span>
           </label>
 
-          <!-- Boost Toggle -->
           <label class="flex items-center gap-1.5 cursor-pointer select-none bg-amber-950/20 px-2 py-1 rounded border border-amber-500/20">
             <input type="checkbox" id="chat-boost" class="rounded bg-dark-700 border-dark-600 text-amber-500 focus:ring-0">
             <span class="text-amber-300 text-xs flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> Boost Racing</span>
@@ -201,23 +189,20 @@
         </div>
       </div>
 
-      <!-- Messages Stream Area -->
       <div id="messages-container" class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
-        <!-- Welcome Message -->
         <div class="flex gap-3 max-w-3xl">
           <div class="w-7 h-7 rounded-md bg-sky-600/30 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xs shrink-0 mt-0.5">
             <i class="fa-solid fa-robot"></i>
           </div>
           <div class="bg-dark-800 border border-dark-700 rounded-xl px-4 py-3 text-sm text-gray-200 shadow-sm leading-relaxed">
-            <p class="font-semibold text-white mb-1">👋 Halo! Playground DeepSeek4Free siap digunakan.</p>
+            <p class="font-semibold text-white mb-1">👋 Hai! Playground DeepSeek4Free siap.</p>
             <p class="text-gray-300 text-xs">
-              Fitur <b>Deep Thinking (R1)</b> dan <b>Web Search</b> sudah aktif secara default. Format tampilan otomatis dirapikan tanpa simbol mentah. Silakan tanyakan hal apa pun atau minta pencarian berita terkini!
+              Fitur <b>Deep Thinking (R1)</b> dan <b>Web Search</b> aktif default. Format rapi tanpa simbol mentah. Tanya apa saja atau minta berita terkini!
             </p>
           </div>
         </div>
       </div>
 
-      <!-- Input Box Area -->
       <div class="pt-2 shrink-0">
         <div class="relative bg-dark-800 border border-dark-600 rounded-xl shadow-lg focus-within:border-sky-500 transition">
           <textarea id="prompt-input" rows="2" placeholder="Tanyakan apa saja... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)"
@@ -236,9 +221,7 @@
       </div>
     </section>
 
-    <!-- TAB 2: POOL & AKUN (DASHBOARD) -->
     <section id="view-pool" class="hidden h-full overflow-y-auto max-w-6xl mx-auto px-5 py-6 space-y-6">
-      <!-- Metric Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-dark-800 border border-dark-700 rounded-xl p-4">
           <div class="flex items-center justify-between text-gray-400 text-xs mb-1">
@@ -277,7 +260,6 @@
         </div>
       </div>
 
-      <!-- Action Toolbar -->
       <div class="flex items-center justify-between flex-wrap gap-3 bg-dark-800 border border-dark-700 p-3 rounded-xl">
         <div class="flex items-center gap-2">
           <button onclick="openModalAddToken()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5 shadow">
@@ -300,7 +282,6 @@
         </div>
       </div>
 
-      <!-- Table of Accounts -->
       <div class="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-gray-300">
@@ -325,9 +306,7 @@
       </div>
     </section>
 
-    <!-- TAB 3: SETTINGS & OPENAI API -->
     <section id="view-settings" class="hidden h-full overflow-y-auto max-w-4xl mx-auto px-5 py-6 space-y-6">
-      <!-- Strategy & Core Settings Card -->
       <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
         <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
           <i class="fa-solid fa-sliders text-sky-400"></i> Pengaturan Pool & Rotasi
@@ -360,7 +339,6 @@
         </div>
       </div>
 
-      <!-- OpenAI-Compatible API Integration Card -->
       <div class="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
         <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-dark-700 pb-3">
           <i class="fa-solid fa-network-wired text-emerald-400"></i> OpenAI-Compatible Endpoint (Untuk Cursor / Claude / LibreChat)
@@ -392,7 +370,6 @@
 
   </main>
 
-  <!-- MODAL: TAMBAH TOKEN (SINGLE / BULK) -->
   <div id="modal-add-token" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-dark-700 pb-3">
@@ -428,19 +405,16 @@
     </div>
   </div>
 
-  <!-- Client JavaScript Logic -->
   <script>
     let currentSessionId = null;
     let isGenerating = false;
 
-    // Set Base URL on load
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('api-base-url').innerText = window.location.origin + '/v1';
       fetchPoolStatus();
       setInterval(fetchPoolStatus, 5000);
     });
 
-    // Tab Navigation
     function switchTab(tab) {
       ['playground', 'pool', 'settings'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
@@ -458,11 +432,9 @@
       if (tab === 'pool') fetchPoolStatus();
     }
 
-    // Custom Robust Markdown Formatter (Zero-fail, converts all ** and symbols into clean HTML)
     function cleanRenderMarkdown(raw) {
       if (!raw) return '';
       
-      // If marked is loaded without issue, run it first
       let html = '';
       if (typeof marked !== 'undefined' && marked.parse) {
         try {
@@ -472,46 +444,35 @@
         }
       }
 
-      // If marked didn't produce output or left raw asterisks, format cleanly
       if (!html || html.includes('**')) {
         let text = escapeHtml(raw);
 
-        // Code blocks ```...```
         text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        // Inline code `...`
         text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-        // Headers # ## ###
         text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
         text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
         text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-        // Bold **text** -> clean bold without ugly asterisks
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-        // Italic *text*
         text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-        // Bullet lists
         text = text.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="ml-4 list-disc">$1</li>');
-        // Numbered lists
         text = text.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="ml-4 list-decimal">$2</li>');
 
-        // Line breaks
         text = text.replace(/\n\n/g, '<div class="h-2"></div>');
         text = text.replace(/\n/g, '<br/>');
 
         html = text;
       }
 
-      // Format DeepSeek web citations cleanly: [citation:1] -> badge chip
       html = html.replace(/\[citation:(\d+)\]/g, '<span class="inline-flex items-center px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-mono mx-0.5 font-bold cursor-pointer hover:bg-sky-500/30" title="Sumber Sitasi $1">🔍 [$1]</span>');
 
       return html;
     }
 
-    // Fetch Pool Status
     async function fetchPoolStatus() {
       try {
         const res = await fetch('/api/status');
@@ -662,7 +623,6 @@
       }
     }
 
-    // Send Message / SSE Streaming Chat in Playground
     async function sendMessage() {
       if (isGenerating) return;
       const input = document.getElementById('prompt-input');
@@ -675,7 +635,6 @@
 
       const container = document.getElementById('messages-container');
 
-      // User Bubble
       const userBubble = document.createElement('div');
       userBubble.className = 'flex justify-end gap-3';
       userBubble.innerHTML = `
@@ -685,7 +644,6 @@
       `;
       container.appendChild(userBubble);
 
-      // Assistant Bubble
       const assistantBubble = document.createElement('div');
       assistantBubble.className = 'flex gap-3 max-w-3xl';
       const msgId = 'msg-' + Date.now();
@@ -695,13 +653,11 @@
           <i class="fa-solid fa-robot"></i>
         </div>
         <div class="flex-1 bg-dark-800 border border-dark-700 rounded-xl p-4 text-sm shadow-sm space-y-3">
-          <!-- Web Search Status Widget -->
           <div id="${msgId}-search-box" class="hidden rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-300 flex items-center gap-2">
             <i class="fa-solid fa-globe animate-spin text-sky-400"></i>
             <span id="${msgId}-search-text">Sedang menelusuri web untuk data terbaru...</span>
           </div>
 
-          <!-- Thinking Collapsible Accordion (DeepSeek-R1) -->
           <div id="${msgId}-thinking-box" class="hidden rounded-lg border border-purple-500/30 bg-purple-950/20 overflow-hidden">
             <button onclick="toggleThinking('${msgId}')" class="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-purple-300 hover:bg-purple-900/30 transition">
               <span class="flex items-center gap-1.5"><i class="fa-solid fa-brain text-purple-400"></i> DeepSeek-R1 Thinking Process</span>
@@ -713,14 +669,12 @@
             <div id="${msgId}-thinking-content" class="p-3 text-xs text-gray-300 font-mono border-t border-purple-500/20 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto"></div>
           </div>
 
-          <!-- Answer Content -->
           <div id="${msgId}-text-content" class="ai-rendered-content">
             <span class="inline-flex items-center gap-2 text-sky-400 font-mono text-xs animate-pulse">
               <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke DeepSeek AI...
             </span>
           </div>
 
-          <!-- Metadata Footer -->
           <div id="${msgId}-footer" class="hidden pt-2 border-t border-dark-700/60 flex items-center justify-between text-[11px] text-gray-500">
             <span id="${msgId}-account-tag" class="flex items-center gap-1 text-emerald-400 font-mono">
               <i class="fa-solid fa-shield-halved text-[10px]"></i> Dilayani oleh Pool
@@ -734,7 +688,6 @@
       container.appendChild(assistantBubble);
       container.scrollTop = container.scrollHeight;
 
-      // Stream Elements
       const searchBox = document.getElementById(`${msgId}-search-box`);
       const searchText = document.getElementById(`${msgId}-search-text`);
       const thinkingBox = document.getElementById(`${msgId}-thinking-box`);
@@ -837,7 +790,6 @@
       }
     }
 
-    // Enter Key
     document.getElementById('prompt-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
