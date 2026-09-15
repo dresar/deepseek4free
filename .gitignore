@@ -18,9 +18,17 @@ node_modules/
 playground-next/node_modules/
 playground-next/.next/
 
-# Aider chat history & temp prompts
-.aider*
+# Aider chat history & temporary files (Strictly excluded from git & GitHub)
+.aider.chat.history.md
+.aider.input.history
+.aider.llm.history
+.aider.tags.cache*
+.aider/
+*.aider.chat.history.md
+*.aider.input.history
+*.aider.llm.history
 prompt_*.txt
+!.aider.conf.yml
 
 
 # Distribution / packaging
@@ -181,4 +189,5 @@ black.py
 test.py
 dsk/cookies.json
 tokens.txt
-tokens.json
+tokens.json
+.aider*
