@@ -227,11 +227,12 @@
 
 <script>
   (async function redirectIfAuthed() {
+    if (window.location.pathname === '/') return;
     const token = localStorage.getItem('dsk4f_token');
     if (!token) return;
     try {
       const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
-      if (res.ok) window.location.href = '/';
+      if (res.ok) window.location.replace('/');
     } catch {}
   })();
 
@@ -269,7 +270,7 @@
       const data = await res.json();
       localStorage.setItem('dsk4f_token', data.token);
       localStorage.setItem('dsk4f_user', data.username);
-      window.location.href = '/';
+      window.location.replace('/');
     } catch (err) {
       errorText.textContent = err.message;
       errorEl.style.display = 'flex';

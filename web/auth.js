@@ -19,6 +19,10 @@ function getStoredUser() {
     return localStorage.getItem(AUTH_USER_KEY) || 'admin';
 }
 
+function isLoginPage() {
+    return window.location.pathname === '/login';
+}
+
 async function authFetch(url, options = {}) {
     const token = getStoredToken();
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
@@ -65,7 +69,7 @@ async function performLogout() {
         }).catch(() => {});
     }
     clearStoredToken();
-    window.location.href = '/login';
+    window.location.replace('/login');
 }
 
 async function changePassword(currentPassword, newPassword) {
@@ -84,7 +88,7 @@ async function initApp() {
     const isAuthed = await checkAuthStatus();
     if (!isAuthed) {
         clearStoredToken();
-        window.location.href = '/login';
+        window.location.replace('/login');
         return false;
     }
     const userDisplay = document.getElementById('header-user');

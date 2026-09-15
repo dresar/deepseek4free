@@ -175,15 +175,16 @@ class ChangePasswordRequest(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_index(request: Request):
-    token = extract_bearer_token(request)
-    if token and verify_session_token(token):
-        if HTML_FILE_PATH.exists():
-            return HTML_FILE_PATH.read_text(encoding="utf-8")
-        return "<h1>web/index.html not found</h1>"
-    if LOGIN_FILE_PATH.exists():
-        return LOGIN_FILE_PATH.read_text(encoding="utf-8")
-    return "<h1>web/login.html not found</h1>"
+async def serve_index():
+    if HTML_FILE_PATH.exists():
+        return HTML_FILE_PATH.read_text(encoding="utf-8")
+    return "<h1>web/index.html not found</h1>"
+
+
+@app.get("/.well-known/appspecific/{path:path}")
+async def well_known(path: str):
+    raise HTTPException(status_code=404)
+
 
 
 @app.get("/login", response_class=HTMLResponse)
