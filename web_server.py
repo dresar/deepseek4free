@@ -175,6 +175,16 @@ class UpdateSkillRequest(BaseModel):
     system_prompt: str
 
 
+class SaveSkillFileRequest(BaseModel):
+    path: str
+    content: str
+
+
+class CreateSkillFileRequest(BaseModel):
+    path: str
+    content: Optional[str] = ""
+
+
 class ToggleSkillRequest(BaseModel):
     is_active: bool
 
@@ -492,6 +502,30 @@ async def get_skill_files(skill_id: str, path: Optional[str] = None, _: str = De
     if not skill:
         raise HTTPException(status_code=404, detail="Skill tidak ditemukan")
     return {"status": "ok", "files": skill.get("files", []), "folder": skill.get("folder")}
+
+
+@app.post("/api/skills/{skill_id}/files/save")
+async def save_skill_file_endpoint(skill_id: str, req: SaveSkillFileRequest, _: str = Depends(require_auth)):
+    result = db.save_skill_file(skill_id, req.path, req.content)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@app.post("/api/skills/{skill_id}/files/create")
+async def create_skill_file_endpoint(skill_id: str, req: CreateSkillFileRequest, _: str = Depends(require_auth)):
+    result = db.create_skill_file(skill_id, req.path, req.content or "")
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@app.delete("/api/skills/{skill_id}/files")
+async def delete_skill_file_endpoint(skill_id: str, path: str, _: str = Depends(require_auth)):
+    result = db.delete_skill_file(skill_id, path)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
 
 
 @app.post("/api/learn")

@@ -581,6 +581,88 @@ class JSONDatabase:
             except Exception as e:
                 return {"error": str(e)}
 
+    def save_skill_file(self, skill_id: str, rel_path: str, content: str) -> Dict[str, Any]:
+        with self._lock:
+            skills = self._data.setdefault("skills", [])
+            skill = next((s for s in skills if s["id"] == skill_id), None)
+            if not skill:
+                return {"error": "Skill tidak ditemukan"}
+            slug = skill.get("slug") or skill.get("folder")
+            if not slug:
+                return {"error": "Folder skill tidak valid"}
+
+            clean_rel = rel_path.strip().replace("\\", "/").lstrip("/")
+            base = (self.base_dir / "skills" / slug).resolve()
+            target = (base / clean_rel).resolve()
+            if not str(target).startswith(str(base)):
+                return {"error": "Akses path dilarang"}
+
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+
+            if clean_rel.lower() in ("skill.md", "readme.md"):
+                parsed = self._parse_skill_file(target)
+                if parsed.get("name"):
+                    skill["name"] = parsed["name"]
+                if parsed.get("icon"):
+                    skill["icon"] = parsed["icon"]
+                if parsed.get("description"):
+                    skill["description"] = parsed["description"]
+                if parsed.get("system_prompt"):
+                    skill["system_prompt"] = parsed["system_prompt"]
+
+            files_list = []
+            for f in base.rglob("*"):
+                if f.is_file():
+                    files_list.append(str(f.relative_to(base)).replace("\\", "/"))
+            skill["files"] = sorted(files_list)
+            skill["file_count"] = len(files_list)
+            self._save_unlocked(self._data)
+
+            return {
+                "status": "ok",
+                "path": clean_rel,
+                "size": target.stat().st_size,
+                "skill": skill
+            }
+
+    def create_skill_file(self, skill_id: str, rel_path: str, content: str = "") -> Dict[str, Any]:
+        return self.save_skill_file(skill_id, rel_path, content)
+
+    def delete_skill_file(self, skill_id: str, rel_path: str) -> Dict[str, Any]:
+        with self._lock:
+            skills = self._data.setdefault("skills", [])
+            skill = next((s for s in skills if s["id"] == skill_id), None)
+            if not skill:
+                return {"error": "Skill tidak ditemukan"}
+            slug = skill.get("slug") or skill.get("folder")
+            if not slug:
+                return {"error": "Folder skill tidak valid"}
+
+            clean_rel = rel_path.strip().replace("\\", "/").lstrip("/")
+            if clean_rel.lower() == "skill.md":
+                return {"error": "File SKILL.md adalah file utama dan tidak boleh dihapus"}
+
+            base = (self.base_dir / "skills" / slug).resolve()
+            target = (base / clean_rel).resolve()
+            if not str(target).startswith(str(base)) or not target.exists() or not target.is_file():
+                return {"error": "File tidak ditemukan"}
+
+            try:
+                target.unlink()
+            except Exception as e:
+                return {"error": str(e)}
+
+            files_list = []
+            for f in base.rglob("*"):
+                if f.is_file():
+                    files_list.append(str(f.relative_to(base)).replace("\\", "/"))
+            skill["files"] = sorted(files_list)
+            skill["file_count"] = len(files_list)
+            self._save_unlocked(self._data)
+
+            return {"status": "ok", "deleted": clean_rel, "remaining_files": skill["files"]}
+
     def get_active_skills_prompt(self) -> str:
         with self._lock:
             active_skills = [s for s in self._data.get("skills", []) if s.get("is_active")]

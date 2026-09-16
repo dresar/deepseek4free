@@ -588,7 +588,7 @@ function renderSkillsGrid(skills) {
         }
 
         const filesBtn = (s.file_count && s.file_count > 1) ? `
-            <button onclick="openSkillFilesModal('${s.id}')" class="btn-secondary btn-sm" title="Lihat ${s.file_count} File Referensi">
+            <button onclick="openModalSkillStudio('${s.id}')" class="btn-secondary btn-sm" title="Buka Studio Berkas (${s.file_count} File)">
                 <i class="fa-regular fa-folder-open" style="color:var(--accent-purple)"></i> ${s.file_count} File
             </button>
         ` : '';
@@ -623,8 +623,8 @@ function renderSkillsGrid(skills) {
                         </span>
                     </div>
                     <div style="display:inline-flex;align-items:center;gap:6px">
-                        <button onclick="openModalEditSkill('${s.id}')" class="btn-secondary btn-sm" title="Edit Skill & Prompt">
-                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        <button onclick="openModalSkillStudio('${s.id}')" class="btn-secondary btn-sm" title="Buka Studio Edit Multi-File">
+                            <i class="fa-solid fa-code"></i> Studio Edit
                         </button>
                         <button onclick="deleteSkill('${s.id}', '${escapeHtml(s.name)}')" class="btn-danger-ghost btn-sm" title="Hapus Skill">
                             <i class="fa-solid fa-trash-can"></i>
@@ -695,128 +695,335 @@ async function submitInstallSkill() {
     }
 }
 
-function openModalEditSkill(skillId) {
+// ==========================================================================
+// Multi-File Skill Studio & Workspace
+// ==========================================================================
+let currentStudioSkill = null;
+let currentStudioFile = null;
+let isStudioDirty = false;
+
+function openModalSkillStudio(skillId, initialFile = null) {
     const skill = allLoadedSkills.find(s => s.id === skillId);
     if (!skill) return;
-    document.getElementById('edit-skill-id').value = skill.id;
-    document.getElementById('edit-skill-name').value = skill.name || '';
-    document.getElementById('edit-skill-icon').value = skill.icon || 'fa-solid fa-wand-magic-sparkles';
-    document.getElementById('edit-skill-desc').value = skill.description || '';
-    document.getElementById('edit-skill-prompt').value = skill.system_prompt || '';
-    document.getElementById('modal-edit-skill').classList.remove('hidden');
-    document.getElementById('edit-skill-name').focus();
-}
+    currentStudioSkill = skill;
 
-function closeModalEditSkill() {
-    document.getElementById('modal-edit-skill').classList.add('hidden');
-}
-
-async function submitEditSkill() {
-    const skillId = document.getElementById('edit-skill-id').value;
-    const name = document.getElementById('edit-skill-name').value.trim();
-    const icon = document.getElementById('edit-skill-icon').value.trim();
-    const desc = document.getElementById('edit-skill-desc').value.trim();
-    const prompt = document.getElementById('edit-skill-prompt').value.trim();
-
-    if (!name || !prompt) {
-        showToast('Nama dan instruksi skill wajib diisi', 'error');
-        return;
+    const iconWrap = document.getElementById('studio-skill-icon-badge');
+    if (skill.icon && skill.icon.includes('fa-')) {
+        iconWrap.innerHTML = `<i class="${escapeHtml(skill.icon)}"></i>`;
+    } else if (skill.icon) {
+        iconWrap.innerHTML = `<span>${escapeHtml(skill.icon)}</span>`;
+    } else {
+        iconWrap.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i>`;
     }
 
-    const btn = document.getElementById('btn-submit-edit-skill');
+    document.getElementById('studio-skill-title').textContent = skill.name || 'Skill';
+    const badge = document.getElementById('studio-skill-badge');
+    badge.className = `badge-tag ${skill.is_builtin ? 'badge-builtin' : 'badge-custom'}`;
+    badge.textContent = skill.is_builtin ? 'Bawaan' : 'Kustom';
+
+    const folder = skill.folder || skill.slug || skill.name.toLowerCase().replace(/\s+/g, '-');
+    document.getElementById('studio-skill-folder-path').textContent = `skills/${folder}/`;
+
+    document.getElementById('studio-meta-name').value = skill.name || '';
+    document.getElementById('studio-meta-icon').value = skill.icon || '';
+    document.getElementById('studio-meta-desc').value = skill.description || '';
+    document.getElementById('studio-meta-drawer').classList.add('hidden');
+
+    document.getElementById('modal-skill-studio').classList.remove('hidden');
+
+    const textarea = document.getElementById('studio-editor-textarea');
+    if (!textarea.dataset.setupDone) {
+        textarea.dataset.setupDone = 'true';
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + 2;
+                markStudioDirty();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveActiveStudioFile();
+            }
+        });
+        textarea.addEventListener('input', () => {
+            markStudioDirty();
+            updateStudioCounts();
+        });
+    }
+
+    refreshStudioFiles(initialFile);
+}
+
+async function refreshStudioFiles(fileToOpen = null) {
+    if (!currentStudioSkill) return;
+    const listEl = document.getElementById('studio-files-list');
+    listEl.innerHTML = '<div style="padding:10px;color:var(--text-muted);font-size:11px"><i class="fa-solid fa-spinner spin"></i> Memuat berkas...</div>';
+
+    try {
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/files`);
+        const data = await res.json();
+        const files = data.files || ['SKILL.md'];
+        currentStudioSkill.files = files;
+        currentStudioSkill.file_count = files.length;
+
+        listEl.innerHTML = files.map(f => {
+            const isSkillMd = f.toLowerCase() === 'skill.md';
+            let iconClass = 'fa-file-lines';
+            let iconColor = 'var(--accent-sky)';
+            if (f.endsWith('.py')) {
+                iconClass = 'fa-file-code';
+                iconColor = 'var(--accent-amber)';
+            } else if (f.endsWith('.json')) {
+                iconClass = 'fa-file-lines';
+                iconColor = 'var(--accent-purple)';
+            } else if (isSkillMd) {
+                iconClass = 'fa-file-shield';
+                iconColor = 'var(--accent-emerald)';
+            }
+
+            const deleteBtn = isSkillMd ? '' : `
+                <button onclick="event.stopPropagation(); deleteStudioFile('${escapeHtml(f)}')" class="btn-icon" style="width:18px;height:18px;font-size:9.5px;opacity:0.6" title="Hapus berkas ini">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            return `
+                <div class="studio-file-entry" id="studio-entry-${escapeHtml(f).replace(/[^a-zA-Z0-9]/g, '_')}" onclick="loadStudioFile('${escapeHtml(f)}')">
+                    <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                        <i class="fa-regular ${iconClass}" style="color:${iconColor};font-size:12px"></i>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(f)}</span>
+                    </div>
+                    ${deleteBtn}
+                </div>
+            `;
+        }).join('');
+
+        const targetFile = fileToOpen || (files.includes('SKILL.md') ? 'SKILL.md' : files[0]);
+        if (targetFile) {
+            loadStudioFile(targetFile);
+        }
+    } catch (e) {
+        listEl.innerHTML = `<div style="padding:10px;color:var(--accent-rose);font-size:11px">Gagal memuat berkas: ${e.message}</div>`;
+    }
+}
+
+async function loadStudioFile(filePath) {
+    if (!currentStudioSkill) return;
+    currentStudioFile = filePath;
+
+    document.querySelectorAll('.studio-file-entry').forEach(el => el.classList.remove('active'));
+    const entryEl = document.getElementById(`studio-entry-${filePath.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    if (entryEl) entryEl.classList.add('active');
+
+    document.getElementById('studio-active-filename').textContent = filePath;
+    const deleteBtn = document.getElementById('btn-studio-delete-file');
+    if (filePath.toLowerCase() === 'skill.md') {
+        deleteBtn.style.display = 'none';
+        document.getElementById('studio-active-file-icon').className = 'fa-regular fa-file-shield color-emerald';
+    } else {
+        deleteBtn.style.display = 'inline-flex';
+        document.getElementById('studio-active-file-icon').className = 'fa-regular fa-file-lines color-sky';
+    }
+
+    const textarea = document.getElementById('studio-editor-textarea');
+    textarea.value = 'Memuat isi berkas...';
+    textarea.disabled = true;
+
+    try {
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/files?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        if (data.file && data.file.content !== undefined) {
+            textarea.value = data.file.content;
+        } else {
+            textarea.value = '';
+        }
+    } catch (e) {
+        textarea.value = `Gagal memuat berkas: ${e.message}`;
+    } finally {
+        textarea.disabled = false;
+        markStudioClean();
+        updateStudioCounts();
+    }
+}
+
+function markStudioDirty() {
+    isStudioDirty = true;
+    document.getElementById('studio-dirty-indicator').style.display = 'inline-block';
+    const status = document.getElementById('studio-status-msg');
+    status.style.color = 'var(--accent-amber)';
+    status.innerHTML = '<i class="fa-solid fa-pen"></i> Belum Disimpan';
+}
+
+function markStudioClean() {
+    isStudioDirty = false;
+    document.getElementById('studio-dirty-indicator').style.display = 'none';
+    const status = document.getElementById('studio-status-msg');
+    status.style.color = 'var(--accent-emerald)';
+    status.innerHTML = '<i class="fa-solid fa-check"></i> Tersimpan';
+}
+
+function updateStudioCounts() {
+    const textarea = document.getElementById('studio-editor-textarea');
+    const val = textarea.value || '';
+    const lines = val.split('\n').length;
+    const chars = val.length;
+    document.getElementById('studio-char-count').textContent = `${lines} baris · ${chars} karakter`;
+}
+
+async function saveActiveStudioFile() {
+    if (!currentStudioSkill || !currentStudioFile) return;
+    const textarea = document.getElementById('studio-editor-textarea');
+    const content = textarea.value;
+
+    const btn = document.getElementById('btn-studio-save-file');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Menyimpan...';
 
     try {
-        const res = await authFetch(`/api/skills/${skillId}/update`, {
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/files/save`, {
             method: 'POST',
             body: JSON.stringify({
-                name,
-                icon,
-                description: desc,
-                system_prompt: prompt
+                path: currentStudioFile,
+                content: content
             })
         });
+        const data = await res.json();
         if (res.ok) {
-            showToast(`Skill "${name}" berhasil diperbarui!`);
-            closeModalEditSkill();
+            showToast(`Berkas "${currentStudioFile}" berhasil disimpan!`);
+            markStudioClean();
+            if (data.skill) {
+                const idx = allLoadedSkills.findIndex(s => s.id === data.skill.id);
+                if (idx >= 0) allLoadedSkills[idx] = data.skill;
+                document.getElementById('studio-skill-title').textContent = data.skill.name;
+            }
             await fetchSkills();
         } else {
-            const err = await res.json();
-            showToast(err.detail || 'Gagal memperbarui skill', 'error');
+            showToast(data.detail || 'Gagal menyimpan berkas', 'error');
         }
     } catch (e) {
         showToast('Gagal: ' + e.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Simpan Perubahan';
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span>Simpan (Ctrl+S)</span>';
     }
 }
 
-async function openSkillFilesModal(skillId) {
-    const skill = allLoadedSkills.find(s => s.id === skillId);
-    if (!skill) return;
-    const modal = document.getElementById('modal-skill-files');
-    const title = document.getElementById('skill-files-title');
-    const listEl = document.getElementById('skill-files-list');
-    const viewerEl = document.getElementById('skill-file-content');
-    const fileNameEl = document.getElementById('skill-file-viewing-name');
-
-    title.innerHTML = `<i class="fa-regular fa-folder-open color-purple"></i> File & Referensi: ${escapeHtml(skill.name)}`;
-    listEl.innerHTML = '<div style="padding:10px;color:var(--text-muted)">Memuat file...</div>';
-    viewerEl.textContent = 'Pilih file dari daftar di sebelah kiri untuk melihat isinya.';
-    fileNameEl.textContent = 'Preview File';
-    modal.classList.remove('hidden');
+async function promptCreateNewSkillFile() {
+    if (!currentStudioSkill) return;
+    const path = prompt('Masukkan nama berkas baru (contoh: references/panduan-baru.md atau custom.md):');
+    if (!path || !path.trim()) return;
+    const cleanPath = path.trim().replace(/\\/g, '/');
 
     try {
-        const res = await authFetch(`/api/skills/${skillId}/files`);
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/files/create`, {
+            method: 'POST',
+            body: JSON.stringify({
+                path: cleanPath,
+                content: `# ${cleanPath}\n\nTulis instruksi atau referensi skill di sini...\n`
+            })
+        });
         const data = await res.json();
-        const files = data.files || [];
-        if (files.length === 0) {
-            listEl.innerHTML = '<div style="padding:10px;color:var(--text-muted)">Tidak ada file dalam skill ini.</div>';
-            return;
-        }
-
-        listEl.innerHTML = files.map(f => `
-            <div class="skill-file-item" onclick="loadSkillFileContent('${skillId}', '${escapeHtml(f)}', this)">
-                <i class="fa-regular ${f.endsWith('.py') ? 'fa-file-code' : 'fa-file-lines'}" style="color:var(--accent-sky)"></i>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${escapeHtml(f)}</span>
-            </div>
-        `).join('');
-
-        if (files.length > 0) {
-            const firstItem = listEl.querySelector('.skill-file-item');
-            loadSkillFileContent(skillId, files[0], firstItem);
-        }
-    } catch (e) {
-        listEl.innerHTML = `<div style="padding:10px;color:var(--accent-rose)">Gagal: ${e.message}</div>`;
-    }
-}
-
-async function loadSkillFileContent(skillId, filePath, el) {
-    document.querySelectorAll('.skill-file-item').forEach(i => i.classList.remove('active'));
-    if (el) el.classList.add('active');
-
-    const viewerEl = document.getElementById('skill-file-content');
-    const fileNameEl = document.getElementById('skill-file-viewing-name');
-    fileNameEl.textContent = filePath;
-    viewerEl.textContent = 'Memuat isi file...';
-
-    try {
-        const res = await authFetch(`/api/skills/${skillId}/files?path=${encodeURIComponent(filePath)}`);
-        const data = await res.json();
-        if (data.file && data.file.content !== undefined) {
-            viewerEl.textContent = data.file.content;
+        if (res.ok) {
+            showToast(`Berkas "${cleanPath}" berhasil dibuat!`);
+            await refreshStudioFiles(cleanPath);
+            await fetchSkills();
         } else {
-            viewerEl.textContent = 'File kosong atau tidak dapat dibaca.';
+            showToast(data.detail || 'Gagal membuat berkas', 'error');
         }
     } catch (e) {
-        viewerEl.textContent = 'Gagal memuat isi file: ' + e.message;
+        showToast('Gagal: ' + e.message, 'error');
     }
 }
 
-function closeModalSkillFiles() {
-    document.getElementById('modal-skill-files').classList.add('hidden');
+async function deleteStudioFile(filePath) {
+    if (!currentStudioSkill) return;
+    if (filePath.toLowerCase() === 'skill.md') {
+        showToast('File SKILL.md tidak boleh dihapus', 'error');
+        return;
+    }
+    if (!confirm(`Hapus berkas "${filePath}" dari skill "${currentStudioSkill.name}"?`)) return;
+
+    try {
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/files?path=${encodeURIComponent(filePath)}`, {
+            method: 'DELETE'
+        });
+        if (res.ok) {
+            showToast(`Berkas "${filePath}" telah dihapus`);
+            await refreshStudioFiles('SKILL.md');
+            await fetchSkills();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Gagal menghapus berkas', 'error');
+        }
+    } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+    }
+}
+
+async function deleteActiveStudioFile() {
+    if (!currentStudioFile) return;
+    await deleteStudioFile(currentStudioFile);
+}
+
+function toggleStudioMetaDrawer() {
+    const drawer = document.getElementById('studio-meta-drawer');
+    drawer.classList.toggle('hidden');
+}
+
+async function saveStudioMetadata() {
+    if (!currentStudioSkill) return;
+    const name = document.getElementById('studio-meta-name').value.trim();
+    const icon = document.getElementById('studio-meta-icon').value.trim();
+    const desc = document.getElementById('studio-meta-desc').value.trim();
+
+    if (!name) {
+        showToast('Nama skill tidak boleh kosong', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-studio-meta');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+        const res = await authFetch(`/api/skills/${currentStudioSkill.id}/update`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name: name,
+                icon: icon,
+                description: desc,
+                system_prompt: currentStudioSkill.system_prompt || ''
+            })
+        });
+        if (res.ok) {
+            showToast('Metadata skill berhasil diperbarui!');
+            currentStudioSkill.name = name;
+            currentStudioSkill.icon = icon;
+            currentStudioSkill.description = desc;
+            document.getElementById('studio-skill-title').textContent = name;
+            await fetchSkills();
+            toggleStudioMetaDrawer();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || 'Gagal memperbarui metadata', 'error');
+        }
+    } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan Metadata';
+    }
+}
+
+function closeModalSkillStudio() {
+    if (isStudioDirty) {
+        if (!confirm('Ada perubahan yang belum disimpan. Yakin ingin keluar?')) return;
+    }
+    document.getElementById('modal-skill-studio').classList.add('hidden');
+    currentStudioSkill = null;
+    currentStudioFile = null;
 }
 
 async function toggleSkill(skillId, isActive) {

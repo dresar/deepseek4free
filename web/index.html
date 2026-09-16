@@ -663,61 +663,110 @@ for chunk in response:
   </div>
 </div>
 
-<!-- MODAL: EDIT SKILL -->
-<div id="modal-edit-skill" class="modal-overlay hidden">
-  <div class="modal-box" style="max-width:640px;width:95%">
-    <div class="modal-header">
-      <div class="modal-title"><i class="fa-solid fa-pen-to-square color-sky"></i> Edit Skill & Instruksi</div>
-      <button onclick="closeModalEditSkill()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-skill-id">
-      <div class="form-group">
-        <label class="form-label">Nama Skill</label>
-        <input type="text" id="edit-skill-name" class="form-input" placeholder="Nama skill">
+<!-- MODAL: MULTI-FILE SKILL STUDIO & EDITOR -->
+<div id="modal-skill-studio" class="modal-overlay hidden" style="z-index:9999;padding:12px">
+  <div class="modal-box skill-studio-box">
+    
+    <!-- Topbar -->
+    <div class="skill-studio-header">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <div id="studio-skill-icon-badge" class="skill-icon-wrap" style="width:34px;height:34px;font-size:14px;border-radius:8px">
+          <i class="fa-solid fa-code"></i>
+        </div>
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="studio-skill-title" style="font-weight:700;font-size:14.5px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Anti-Slop Master Writer</span>
+            <span id="studio-skill-badge" class="badge-tag badge-builtin">Bawaan</span>
+          </div>
+          <div id="studio-skill-folder-path" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">skills/anti-slop-writing/</div>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Icon (FontAwesome Class atau Emoji)</label>
-        <input type="text" id="edit-skill-icon" class="form-input" placeholder="fa-solid fa-code">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Deskripsi Singkat</label>
-        <input type="text" id="edit-skill-desc" class="form-input" placeholder="Deskripsi">
-      </div>
-      <div class="form-group">
-        <label class="form-label">System Prompt / Markdown Instructions (Tersimpan ke file SKILL.md)</label>
-        <textarea id="edit-skill-prompt" class="form-textarea" rows="10" placeholder="Tulis instruksi persona dan gaya kerja AI di sini..."></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button onclick="closeModalEditSkill()" class="btn-secondary">Batal</button>
-      <button id="btn-submit-edit-skill" onclick="submitEditSkill()" class="btn-primary">Simpan Perubahan</button>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL: VIEW SKILL FILES & REFERENCES -->
-<div id="modal-skill-files" class="modal-overlay hidden">
-  <div class="modal-box" style="max-width:850px;width:95%">
-    <div class="modal-header">
-      <div class="modal-title" id="skill-files-title"><i class="fa-regular fa-folder-open color-purple"></i> File & Referensi Skill</div>
-      <button onclick="closeModalSkillFiles()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body" style="padding:14px">
-      <div style="display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:360px">
-        <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:8px;max-height:420px;overflow-y:auto">
-          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;padding:0 4px">Daftar File</div>
-          <div id="skill-files-list" style="display:flex;flex-direction:column;gap:4px"></div>
-        </div>
-        <div style="display:flex;flex-direction:column">
-          <div id="skill-file-viewing-name" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-sky);margin-bottom:6px;font-weight:600">Preview</div>
-          <pre id="skill-file-content" style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-secondary);flex:1;max-height:390px;overflow:auto;white-space:pre-wrap;line-height:1.5"></pre>
-        </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="toggleStudioMetaDrawer()" id="btn-toggle-meta" class="btn-secondary btn-sm" title="Edit Metadata Skill (Nama, Icon, Deskripsi)">
+          <i class="fa-solid fa-sliders"></i> <span class="hide-mobile">Meta</span>
+        </button>
+        <button onclick="promptCreateNewSkillFile()" class="btn-secondary btn-sm" title="Buat File Baru di Skill Ini">
+          <i class="fa-solid fa-plus"></i> <span class="hide-mobile">File Baru</span>
+        </button>
+        <button id="btn-studio-save-file" onclick="saveActiveStudioFile()" class="btn-primary btn-sm" title="Simpan File Saat Ini (Ctrl+S)">
+          <i class="fa-solid fa-floppy-disk"></i> <span>Simpan (Ctrl+S)</span>
+        </button>
+        <button onclick="closeModalSkillStudio()" class="btn-close" title="Tutup Studio"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button onclick="closeModalSkillFiles()" class="btn-secondary">Tutup</button>
+
+    <!-- Main Workspace -->
+    <div class="skill-studio-workspace">
+      
+      <!-- Left Sidebar: File Tree -->
+      <aside class="skill-studio-sidebar">
+        <div class="studio-sidebar-header">
+          <span><i class="fa-regular fa-folder-open color-sky"></i> BERKAS SKILL</span>
+          <button onclick="promptCreateNewSkillFile()" class="btn-icon" style="width:20px;height:20px;font-size:10px" title="Tambah File">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div id="studio-files-list" class="studio-files-list"></div>
+      </aside>
+
+      <!-- Center Main: Code/Markdown Editor -->
+      <main class="skill-studio-editor-pane">
+        <div class="studio-editor-topbar">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            <i class="fa-regular fa-file-lines color-sky" id="studio-active-file-icon"></i>
+            <span id="studio-active-filename" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text-primary)">SKILL.md</span>
+            <span id="studio-dirty-indicator" style="display:none;width:7px;height:7px;border-radius:50%;background:var(--accent-amber)" title="Ada perubahan belum disimpan"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button id="btn-studio-delete-file" onclick="deleteActiveStudioFile()" class="btn-danger-ghost btn-sm" style="display:none;font-size:10.5px" title="Hapus File Ini">
+              <i class="fa-solid fa-trash-can"></i> Hapus File
+            </button>
+          </div>
+        </div>
+
+        <div class="studio-editor-wrap">
+          <textarea id="studio-editor-textarea" class="studio-code-editor" spellcheck="false" placeholder="Tulis isi file markdown / kode di sini..."></textarea>
+        </div>
+
+        <div class="studio-editor-statusbar">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span id="studio-status-msg" style="color:var(--accent-emerald)"><i class="fa-solid fa-check"></i> Tersimpan</span>
+            <span id="studio-char-count" style="color:var(--text-muted)">0 baris · 0 karakter</span>
+          </div>
+          <div style="color:var(--text-muted);font-size:10.5px">
+            UTF-8 · Markdown/Text · Tab: 2 spasi · Pintasan: Ctrl+S
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Drawer: Meta Drawer (Collapsible) -->
+      <aside id="studio-meta-drawer" class="skill-studio-meta-drawer hidden">
+        <div class="studio-meta-header">
+          <span style="font-weight:600;font-size:12px"><i class="fa-solid fa-sliders color-purple"></i> Metadata Skill</span>
+          <button onclick="toggleStudioMetaDrawer()" class="btn-icon" style="width:18px;height:18px;font-size:10px"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="studio-meta-body">
+          <div class="form-group">
+            <label class="form-label">Nama Skill</label>
+            <input type="text" id="studio-meta-name" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Icon (FontAwesome / Emoji)</label>
+            <input type="text" id="studio-meta-icon" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deskripsi Singkat</label>
+            <textarea id="studio-meta-desc" class="form-textarea" rows="4"></textarea>
+          </div>
+          <button id="btn-save-studio-meta" onclick="saveStudioMetadata()" class="btn-primary btn-sm" style="width:100%;margin-top:8px">
+            Simpan Metadata
+          </button>
+        </div>
+      </aside>
+
     </div>
+
   </div>
 </div>
 

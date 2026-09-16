@@ -1370,4 +1370,185 @@ input:checked + .slider:before {
   font-weight: 600;
 }
 
+/* Skill Studio Multi-File Workspace */
+.skill-studio-box {
+  width: 96vw;
+  max-width: 1400px;
+  height: 92vh;
+  max-height: 920px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.skill-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.skill-studio-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-studio-sidebar {
+  width: 260px;
+  min-width: 220px;
+  background: rgba(15, 23, 42, 0.6);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.studio-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.studio-files-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.studio-file-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.studio-file-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.studio-file-entry.active {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-sky);
+  font-weight: 600;
+  border-left: 2px solid var(--accent-sky);
+}
+
+.skill-studio-editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-primary);
+}
+
+.studio-editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.4);
+  border-bottom: 1px solid var(--border);
+}
+
+.studio-editor-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+
+.studio-code-editor {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  outline: none;
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  tab-size: 2;
+  overflow-y: auto;
+}
+
+.studio-editor-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  font-size: 11px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.skill-studio-meta-drawer {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+
+.skill-studio-meta-drawer.hidden {
+  display: none;
+}
+
+.studio-meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.studio-meta-body {
+  padding: 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .skill-studio-box {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .skill-studio-sidebar {
+    width: 180px;
+  }
+  .hide-mobile {
+    display: none;
+  }
+}
+
 
