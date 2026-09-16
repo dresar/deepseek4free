@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # DeepSeek4Free VPS Automated Deploy & Auto-Update Setup Script
 # Works on Ubuntu 20.04 / 22.04 / 24.04 LTS & Debian 11/12
