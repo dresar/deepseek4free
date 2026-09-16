@@ -507,100 +507,136 @@ yes-always: true</code></pre>
 
     <!-- VIEW: SETTINGS -->
     <section id="view-settings" class="view-section view-settings hidden">
+      <!-- Section 1: Pool & Rotasi -->
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><i class="fa-solid fa-sliders color-sky"></i> Pool &amp; Rotasi</div>
+          <div class="panel-title">
+            <i class="fa-solid fa-sliders color-sky"></i>
+            Pool &amp; Rotasi Akun
+            <span class="panel-subtitle">Strategi pembagian beban token dan hedged racing</span>
+          </div>
         </div>
         <div class="settings-grid">
           <div class="form-group">
-            <label class="form-label">Algoritma Rotasi</label>
+            <label class="form-label"><i class="fa-solid fa-arrows-spin color-sky"></i> Algoritma Rotasi</label>
             <select id="setting-strategy" class="form-select">
-              <option value="round_robin">Round-Robin</option>
+              <option value="round_robin">Round-Robin (Bergantian Rata)</option>
               <option value="lru">LRU (Least Recently Used)</option>
             </select>
-            <span class="form-helper">Cara router memilih akun berikutnya</span>
+            <span class="form-helper">Cara router memilih giliran akun berikutnya.</span>
           </div>
           <div class="form-group">
-            <label class="form-label">Boost Mode</label>
+            <label class="form-label"><i class="fa-solid fa-bolt color-amber"></i> Boost Mode</label>
             <select id="setting-boost" class="form-select">
-              <option value="false">Nonaktif</option>
-              <option value="true">Aktif (Hedged Racing)</option>
+              <option value="false">Nonaktif (Hemat Akun)</option>
+              <option value="true">Aktif (Hedged Racing 2 Akun)</option>
             </select>
-            <span class="form-helper">Balapan 2 akun tercepat untuk latensi rendah</span>
+            <span class="form-helper">Balapan 2 akun tercepat untuk memangkas latensi.</span>
           </div>
           <div class="form-group">
-            <label class="form-label">Nalar DeepSeek R1 (Thinking Display)</label>
+            <label class="form-label"><i class="fa-solid fa-brain color-purple"></i> Nalar DeepSeek R1</label>
             <select id="setting-thinking-display" class="form-select">
-              <option value="hidden" selected>Tersembunyi di Latar Belakang (Direkomendasikan)</option>
-              <option value="visible">Tampilkan Kotak Nalar</option>
+              <option value="hidden" selected>Tersembunyi di Background (Cepat &amp; Bersih)</option>
+              <option value="visible">Tampilkan Kotak Nalar Lengkap</option>
             </select>
-            <span class="form-helper">Hasil loading langsung ke jawaban, proses nalar jalan di background</span>
+            <span class="form-helper">Hasil langsung muncul, proses nalar jalan di background.</span>
           </div>
         </div>
         <div class="form-actions">
           <button onclick="saveSettings()" class="btn-primary">
-            <i class="fa-solid fa-floppy-disk"></i> Simpan
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
           </button>
         </div>
       </div>
 
+      <!-- Section 2: Keamanan -->
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><i class="fa-solid fa-key color-purple"></i> Keamanan</div>
-        </div>
-        <div class="settings-grid">
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <p style="font-size:12px;color:var(--text-muted)">Ganti password akun admin.</p>
-            <button onclick="openModalChangePass()" class="btn-secondary" style="margin-top:8px">
-              <i class="fa-solid fa-lock"></i> Ganti Password
-            </button>
+          <div class="panel-title">
+            <i class="fa-solid fa-shield-halved color-purple"></i>
+            Keamanan &amp; Autentikasi
+            <span class="panel-subtitle">Proteksi kredensial dashboard dan hak akses admin</span>
           </div>
+        </div>
+        <div style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-user-shield color-purple"></i> Akun Administrator
+            </div>
+            <p style="font-size:11.5px;color:var(--text-muted);margin-top:3px">
+              Ganti password masuk akun admin untuk mengamankan dashboard dari akses tidak sah.
+            </p>
+          </div>
+          <button onclick="openModalChangePass()" class="btn-secondary">
+            <i class="fa-solid fa-key"></i> Ganti Password Admin
+          </button>
         </div>
       </div>
 
+      <!-- Section 3: OpenAI-Compatible API -->
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><i class="fa-solid fa-network-wired color-emerald"></i> OpenAI-Compatible API</div>
+          <div class="panel-title">
+            <i class="fa-solid fa-network-wired color-emerald"></i>
+            Endpoint OpenAI-Compatible (/v1)
+            <span class="panel-subtitle">Kompatibel penuh dengan Cursor, Aider, Claude Code, Cline, LibreChat</span>
+          </div>
         </div>
-        <div style="padding:16px">
+        <div style="padding:18px 22px;display:flex;flex-direction:column;gap:14px">
           <div class="api-box">
             <div class="api-row">
-              <div>
-                <div class="api-key-label">Base URL</div>
-                <div class="api-key-value" id="api-base-url">/v1</div>
+              <div style="flex:1">
+                <div class="api-key-label">Base URL (OpenAI Endpoint)</div>
+                <div class="api-key-value" id="api-base-url" style="font-size:13px">/v1</div>
               </div>
-              <button onclick="copyToClipboard(document.getElementById('api-base-url').textContent)" class="btn-copy">Salin</button>
+              <button onclick="copyToClipboard(document.getElementById('api-base-url').textContent)" class="btn-copy">
+                <i class="fa-regular fa-copy"></i> Salin URL
+              </button>
             </div>
             <hr class="api-divider">
             <div class="api-row">
               <div>
-                <div class="api-key-label">Model</div>
-                <div style="color:var(--accent-sky);font-size:12px">deepseek-reasoner · deepseek-chat</div>
+                <div class="api-key-label">Model Yang Didukung</div>
+                <div style="color:var(--accent-sky);font-size:12px;font-family:'JetBrains Mono',monospace">deepseek-reasoner (R1) · deepseek-chat (V3) · claude-3-7-sonnet</div>
               </div>
             </div>
             <hr class="api-divider">
             <div class="api-row">
               <div>
-                <div class="api-key-label">API Key</div>
-                <div style="color:var(--text-secondary);font-size:12px">sk-deepseek4free (isi bebas)</div>
+                <div class="api-key-label">Format Autentikasi Header</div>
+                <div style="color:var(--text-secondary);font-size:12px;font-family:'JetBrains Mono',monospace">Authorization: Bearer dsk-live-... atau Bearer sk-deepseek4free</div>
               </div>
             </div>
           </div>
-          <p style="font-size:11px;color:var(--text-muted);margin-top:10px">
-            Kompatibel dengan Cursor, Claude Code, Cline, LibreChat, NextChat.
-          </p>
         </div>
       </div>
 
       <!-- Section 4: VPS & GitHub Auto-Update -->
       <div class="panel">
         <div class="panel-header" style="justify-content:space-between">
-          <div class="panel-title"><i class="fa-solid fa-cloud-arrow-up color-sky"></i> VPS Auto-Update &amp; GitHub Continuous Deployment</div>
+          <div class="panel-title">
+            <i class="fa-solid fa-cloud-arrow-up color-sky"></i>
+            VPS Auto-Update &amp; GitHub Continuous Deployment
+          </div>
           <span id="vps-auto-badge" class="badge badge-emerald" style="font-size:11px"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat...</span>
         </div>
-        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
-          <div id="vps-update-alert" class="hidden" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius-md);padding:12px;display:flex;align-items:center;justify-content:space-between">
+        <div style="padding:18px 22px;display:flex;flex-direction:column;gap:16px">
+          <!-- Banner saat sinkron dan versi terbaru -->
+          <div id="vps-synced-banner" class="synced-banner">
+            <div style="display:flex;align-items:center;gap:10px">
+              <i class="fa-solid fa-circle-check color-emerald" style="font-size:18px"></i>
+              <div>
+                <strong style="color:var(--accent-emerald);font-size:12.5px">Codebase Server Sinkron &amp; Mutakhir</strong>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Server VPS berjalan pada versi commit remote GitHub terbaru.</div>
+              </div>
+            </div>
+            <button onclick="fetchSystemVersion(true)" class="btn-secondary" style="padding:5px 12px;font-size:11px">
+              <i class="fa-solid fa-arrows-rotate"></i> Cek Ulang
+            </button>
+          </div>
+
+          <!-- Banner saat ada versi baru di GitHub -->
+          <div id="vps-update-alert" class="update-alert-banner hidden">
             <div style="display:flex;align-items:center;gap:10px">
               <i class="fa-solid fa-bell color-amber" style="font-size:18px"></i>
               <div>
@@ -614,27 +650,29 @@ yes-always: true</code></pre>
           </div>
 
           <div class="api-box">
-            <div class="api-row">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:16px">
               <div>
-                <div class="api-key-label"><i class="fa-solid fa-code-commit"></i> Commit Server Saat Ini</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-sky);margin-top:2px" id="vps-current-commit">--</div>
+                <div class="api-key-label"><i class="fa-solid fa-code-commit color-sky"></i> Commit Server Saat Ini</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-sky);margin-top:3px" id="vps-current-commit">--</div>
               </div>
               <div>
-                <div class="api-key-label"><i class="fa-solid fa-code-branch"></i> Branch Aktif</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-purple);margin-top:2px" id="vps-current-branch">main</div>
+                <div class="api-key-label"><i class="fa-solid fa-code-branch color-purple"></i> Branch Aktif</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-purple);margin-top:3px" id="vps-current-branch">main</div>
               </div>
               <div>
-                <div class="api-key-label"><i class="fa-brands fa-github"></i> Remote GitHub HEAD</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-emerald);margin-top:2px" id="vps-remote-commit">--</div>
+                <div class="api-key-label"><i class="fa-brands fa-github color-emerald"></i> Remote GitHub HEAD</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-emerald);margin-top:3px" id="vps-remote-commit">--</div>
               </div>
             </div>
             <hr class="api-divider">
             <div class="api-row">
               <div style="flex:1">
-                <div class="api-key-label"><i class="fa-solid fa-bolt"></i> GitHub Webhook URL (Auto-Deploy Instan)</div>
-                <div class="api-key-value" id="vps-webhook-url" style="word-break:break-all">--</div>
+                <div class="api-key-label"><i class="fa-solid fa-bolt color-amber"></i> GitHub Webhook URL (Auto-Deploy Instan)</div>
+                <div class="api-key-value" id="vps-webhook-url">--</div>
               </div>
-              <button onclick="copyToClipboard(document.getElementById('vps-webhook-url').textContent)" class="btn-copy">Salin Webhook URL</button>
+              <button onclick="copyToClipboard(document.getElementById('vps-webhook-url').textContent)" class="btn-copy">
+                <i class="fa-regular fa-copy"></i> Salin Webhook URL
+              </button>
             </div>
           </div>
 

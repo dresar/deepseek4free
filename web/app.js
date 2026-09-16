@@ -1615,6 +1615,7 @@ async function fetchSystemVersion(showNotification = false) {
     const webhookUrlEl = document.getElementById('vps-webhook-url');
     const alertBox = document.getElementById('vps-update-alert');
     const alertMsg = document.getElementById('vps-update-alert-msg');
+    const syncedBox = document.getElementById('vps-synced-banner');
 
     if (webhookUrlEl) {
         webhookUrlEl.textContent = `${window.location.origin}/api/webhook/github`;
@@ -1639,20 +1640,22 @@ async function fetchSystemVersion(showNotification = false) {
             }
         }
 
-        if (alertBox) {
-            if (data.has_update) {
+        if (data.has_update) {
+            if (alertBox) {
                 alertBox.classList.remove('hidden');
                 if (alertMsg) {
                     alertMsg.textContent = `Pembaruan tersedia di GitHub (${data.current_commit} → ${data.remote_commit})!`;
                 }
-                if (showNotification) {
-                    showToast(`Pembaruan tersedia di GitHub (${data.current_commit} → ${data.remote_commit})!`);
-                }
-            } else {
-                alertBox.classList.add('hidden');
-                if (showNotification) {
-                    showToast('Codebase server Anda sudah pada versi GitHub terbaru!');
-                }
+            }
+            if (syncedBox) syncedBox.classList.add('hidden');
+            if (showNotification) {
+                showToast(`Pembaruan tersedia di GitHub (${data.current_commit} → ${data.remote_commit})!`);
+            }
+        } else {
+            if (alertBox) alertBox.classList.add('hidden');
+            if (syncedBox) syncedBox.classList.remove('hidden');
+            if (showNotification) {
+                showToast('Codebase server Anda sudah pada versi GitHub terbaru!');
             }
         }
     } catch (e) {
