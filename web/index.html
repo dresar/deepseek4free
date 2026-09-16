@@ -470,6 +470,37 @@ for chunk in response:
             </div>
           </div>
 
+          <!-- Section 5: Aider CLI Pair Programming -->
+          <div class="panel" style="margin:0;border:1px solid var(--border)">
+            <div class="panel-header" style="background:var(--bg-card)">
+              <div class="panel-title" style="font-size:13px">
+                <i class="fa-solid fa-terminal color-emerald"></i> 5. Integrasi Aider Pair Programming CLI
+              </div>
+              <button onclick="copyDynamicCode('doc-aider-code')" class="btn-copy">Salin Config Aider</button>
+            </div>
+            <div style="padding:14px;font-size:12px;color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+              <p style="margin:0">Jalankan Aider dengan endpoint VPS DeepSeek4Free untuk reasoning coding super cepat via terminal:</p>
+              <div>
+                <strong style="color:var(--text-primary)">Opsi 1: One-liner Command Terminal:</strong>
+                <pre style="background:var(--bg-input);padding:10px;border-radius:var(--radius-md);font-size:11px;color:var(--accent-sky);overflow-x:auto;margin-top:6px;border:1px solid var(--border)"><code id="doc-aider-oneliner">aider --model openai/deepseek-reasoner --openai-api-base https://deepseek.serverinka.cloud/v1 --openai-api-key sk-deepseek4free</code></pre>
+              </div>
+              <div>
+                <strong style="color:var(--text-primary)">Opsi 2: Simpan di File <code>.aider.conf.yml</code>:</strong>
+                <pre style="background:var(--bg-input);padding:10px;border-radius:var(--radius-md);font-size:11px;color:var(--accent-emerald);overflow-x:auto;margin-top:6px;border:1px solid var(--border)"><code id="doc-aider-code">model: openai/deepseek-reasoner
+openai-api-base: https://deepseek.serverinka.cloud/v1
+openai-api-key: sk-deepseek4free
+set-env:
+  - OPENAI_API_BASE=https://deepseek.serverinka.cloud/v1
+  - OPENAI_BASE_URL=https://deepseek.serverinka.cloud/v1
+  - OPENAI_API_KEY=sk-deepseek4free
+  - AIDER_YES_ALWAYS=true
+show-model-warnings: false
+map-tokens: 2048
+yes-always: true</code></pre>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

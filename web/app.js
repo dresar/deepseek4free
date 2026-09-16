@@ -199,6 +199,26 @@ for chunk in response:
     if chunk.choices and chunk.choices[0].delta.content:
         print(chunk.choices[0].delta.content, end="", flush=True)`;
     }
+
+    const docAiderOneliner = document.getElementById('doc-aider-oneliner');
+    if (docAiderOneliner) {
+        docAiderOneliner.textContent = `aider --model openai/deepseek-reasoner --openai-api-base ${baseV1} --openai-api-key sk-deepseek4free`;
+    }
+
+    const docAiderCode = document.getElementById('doc-aider-code');
+    if (docAiderCode) {
+        docAiderCode.textContent = `model: openai/deepseek-reasoner
+openai-api-base: ${baseV1}
+openai-api-key: sk-deepseek4free
+set-env:
+  - OPENAI_API_BASE=${baseV1}
+  - OPENAI_BASE_URL=${baseV1}
+  - OPENAI_API_KEY=sk-deepseek4free
+  - AIDER_YES_ALWAYS=true
+show-model-warnings: false
+map-tokens: 2048
+yes-always: true`;
+    }
 }
 window.updateDynamicEndpoints = updateDynamicEndpoints;
 
