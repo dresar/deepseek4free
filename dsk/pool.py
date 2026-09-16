@@ -159,10 +159,10 @@ class TokenEntry:
         """Force creation of a brand new chat session ID."""
         return self.get_or_create_session(force_new=True)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, include_token: bool = True) -> Dict[str, Any]:
         """Export token statistics and status as a dictionary."""
         with self._lock:
-            return {
+            data = {
                 "name": self.name,
                 "token_masked": self.mask_token(self.token),
                 "status": self.status.value,
@@ -176,6 +176,9 @@ class TokenEntry:
                 "has_active_session": bool(self.active_session_id),
                 "last_error": self.last_error,
             }
+            if include_token:
+                data["token"] = self.token
+            return data
 
 
 class DeepSeekPool:

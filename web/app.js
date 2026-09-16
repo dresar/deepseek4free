@@ -93,6 +93,54 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
+async function copyToClipboard(text, msg = 'Berhasil disalin ke clipboard!') {
+    if (!text) {
+        showToast('Tidak ada teks untuk disalin', 'error');
+        return;
+    }
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            ta.setAttribute('readonly', '');
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+        showToast(msg);
+    } catch (e) {
+        console.error('Copy failed:', e);
+        showToast('Gagal menyalin: ' + e.message, 'error');
+    }
+}
+window.copyToClipboard = copyToClipboard;
+
+function toggleTokenMask(index, fullToken, maskedName) {
+    const span = document.getElementById(`token-disp-${index}`);
+    const btn = document.getElementById(`btn-toggle-mask-${index}`);
+    if (!span || !btn) return;
+    const isRevealed = span.dataset.revealed === 'true';
+    if (isRevealed) {
+        span.textContent = maskedName;
+        span.dataset.revealed = 'false';
+        btn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        btn.title = 'Lihat Token Utuh';
+    } else {
+        span.textContent = fullToken;
+        span.dataset.revealed = 'true';
+        btn.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+        btn.title = 'Sembunyikan Token';
+    }
+}
+window.toggleTokenMask = toggleTokenMask;
+
 function escapeHtml(str) {
     return str
         .replace(/&/g, "&amp;")
@@ -202,14 +250,18 @@ function renderTokensTable(tokens) {
         const reqs = `${t.total_successes || 0} / ${(t.total_successes || 0) + (t.total_errors || 0)}`;
         const err = t.last_error ? `<span class="color-rose" title="${escapeHtml(t.last_error)}" style="cursor:help;font-size:11px">${escapeHtml(t.last_error.slice(0, 28))}${t.last_error.length > 28 ? '…' : ''}</span>` : '<span style="color:var(--text-muted)">—</span>';
         const rawToken = t.token || t.name;
+        const displayName = t.token_masked || t.name;
 
         return `<tr id="token-row-${i}">
             <td style="color:var(--text-muted)">${i + 1}</td>
             <td>
                 <div style="display:flex;align-items:center;gap:6px">
-                    <span style="color:var(--text-primary);font-weight:600;font-family:'JetBrains Mono',monospace;font-size:11.5px">${escapeHtml(t.name)}</span>
-                    <button onclick="copyToClipboard('${escapeHtml(rawToken)}')" class="btn-icon" style="width:20px;height:20px;font-size:10px" title="Salin Token">
+                    <span id="token-disp-${i}" data-revealed="false" style="color:var(--text-primary);font-weight:600;font-family:'JetBrains Mono',monospace;font-size:11.5px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(displayName)}</span>
+                    <button onclick="copyToClipboard('${escapeHtml(rawToken)}', 'Token akun berhasil disalin!')" class="btn-icon" style="width:20px;height:20px;font-size:10px" title="Salin Token Akun">
                         <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <button onclick="toggleTokenMask(${i}, '${escapeHtml(rawToken)}', '${escapeHtml(displayName)}')" id="btn-toggle-mask-${i}" class="btn-icon" style="width:20px;height:20px;font-size:10px" title="Lihat / Sembunyikan Token">
+                        <i class="fa-regular fa-eye"></i>
                     </button>
                 </div>
             </td>
