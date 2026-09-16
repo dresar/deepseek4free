@@ -228,8 +228,11 @@ class ChangePasswordRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     if HTML_FILE_PATH.exists():
-        return HTML_FILE_PATH.read_text(encoding="utf-8")
-    return "<h1>web/index.html not found</h1>"
+        return HTMLResponse(
+            content=HTML_FILE_PATH.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"}
+        )
+    return HTMLResponse("<h1>web/index.html not found</h1>", status_code=404)
 
 
 @app.get("/.well-known/{path:path}")
@@ -237,12 +240,14 @@ async def well_known(path: str):
     return {}
 
 
-
 @app.get("/login", response_class=HTMLResponse)
 async def serve_login():
     if LOGIN_FILE_PATH.exists():
-        return LOGIN_FILE_PATH.read_text(encoding="utf-8")
-    return "<h1>login.html not found</h1>"
+        return HTMLResponse(
+            content=LOGIN_FILE_PATH.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"}
+        )
+    return HTMLResponse("<h1>login.html not found</h1>", status_code=404)
 
 
 @app.get("/web/{filename}")
@@ -259,7 +264,11 @@ async def serve_static(filename: str):
         ".html": "text/html",
     }
     media_type = media_types.get(file_path.suffix, "text/plain")
-    return PlainTextResponse(file_path.read_text(encoding="utf-8"), media_type=media_type)
+    return PlainTextResponse(
+        file_path.read_text(encoding="utf-8"),
+        media_type=media_type,
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"}
+    )
 
 
 @app.get("/favicon.ico")
