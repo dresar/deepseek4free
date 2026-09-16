@@ -560,6 +560,75 @@ for chunk in response:
           </p>
         </div>
       </div>
+
+      <!-- Section 4: VPS & GitHub Auto-Update -->
+      <div class="panel">
+        <div class="panel-header" style="justify-content:space-between">
+          <div class="panel-title"><i class="fa-solid fa-cloud-arrow-up color-sky"></i> VPS Auto-Update &amp; GitHub Continuous Deployment</div>
+          <span id="vps-auto-badge" class="badge badge-emerald" style="font-size:11px"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat...</span>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+          <div id="vps-update-alert" class="hidden" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius-md);padding:12px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px">
+              <i class="fa-solid fa-bell color-amber" style="font-size:18px"></i>
+              <div>
+                <strong style="color:var(--accent-amber);font-size:12.5px">Versi Baru Tersedia di GitHub!</strong>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px" id="vps-update-alert-msg">Versi remote lebih baru dari codebase server.</div>
+              </div>
+            </div>
+            <button onclick="triggerManualUpdate()" class="btn-primary" style="padding:6px 14px;font-size:12px">
+              <i class="fa-solid fa-arrow-rotate-right"></i> Update Sekarang
+            </button>
+          </div>
+
+          <div class="api-box">
+            <div class="api-row">
+              <div>
+                <div class="api-key-label"><i class="fa-solid fa-code-commit"></i> Commit Server Saat Ini</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-sky);margin-top:2px" id="vps-current-commit">--</div>
+              </div>
+              <div>
+                <div class="api-key-label"><i class="fa-solid fa-code-branch"></i> Branch Aktif</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-purple);margin-top:2px" id="vps-current-branch">main</div>
+              </div>
+              <div>
+                <div class="api-key-label"><i class="fa-brands fa-github"></i> Remote GitHub HEAD</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-emerald);margin-top:2px" id="vps-remote-commit">--</div>
+              </div>
+            </div>
+            <hr class="api-divider">
+            <div class="api-row">
+              <div style="flex:1">
+                <div class="api-key-label"><i class="fa-solid fa-bolt"></i> GitHub Webhook URL (Auto-Deploy Instan)</div>
+                <div class="api-key-value" id="vps-webhook-url" style="word-break:break-all">--</div>
+              </div>
+              <button onclick="copyToClipboard(document.getElementById('vps-webhook-url').textContent)" class="btn-copy">Salin Webhook URL</button>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px">
+              <i class="fa-solid fa-circle-question color-sky"></i> Cara Mengaktifkan Auto-Deploy Instan di GitHub:
+            </div>
+            <ol style="font-size:11.5px;color:var(--text-secondary);margin-left:18px;line-height:1.7">
+              <li>Buka repositori Anda di GitHub &rarr; <strong>Settings</strong> &rarr; <strong>Webhooks</strong> &rarr; klik <strong>Add webhook</strong>.</li>
+              <li>Paste URL di atas ke kolom <strong>Payload URL</strong>.</li>
+              <li>Pilih <strong>Content type: application/json</strong>.</li>
+              <li>Pilih <strong>Just the push event</strong>, lalu klik <strong>Add webhook</strong>.</li>
+              <li>Selesai! Setiap Anda push commit ke GitHub, VPS akan otomatis menarik kode terbaru, menginstal library baru, dan me-restart server dalam hitungan detik tanpa downtime!</li>
+            </ol>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="checkSystemUpdate(true)" class="btn-secondary" id="btn-check-vps-update">
+              <i class="fa-solid fa-magnifying-glass"></i> Periksa Pembaruan GitHub
+            </button>
+            <button onclick="triggerManualUpdate()" class="btn-primary" id="btn-trigger-vps-update">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Tarik &amp; Pasang Versi Terbaru
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>

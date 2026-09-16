@@ -82,6 +82,7 @@ function switchTab(tab) {
     if (tab === 'pool') fetchPoolStatus();
     if (tab === 'keys') fetchApiKeys();
     if (tab === 'skills') fetchSkills();
+    if (tab === 'settings') fetchSystemVersion();
 }
 
 function showToast(message, type = 'success') {
@@ -1506,3 +1507,103 @@ function clearChat() {
             </div>
         </div>`;
 }
+
+async function fetchSystemVersion(showNotification = false) {
+    const badge = document.getElementById('vps-auto-badge');
+    const commitEl = document.getElementById('vps-current-commit');
+    const branchEl = document.getElementById('vps-current-branch');
+    const remoteEl = document.getElementById('vps-remote-commit');
+    const webhookUrlEl = document.getElementById('vps-webhook-url');
+    const alertBox = document.getElementById('vps-update-alert');
+    const alertMsg = document.getElementById('vps-update-alert-msg');
+
+    if (webhookUrlEl) {
+        webhookUrlEl.textContent = `${window.location.origin}/api/webhook/github`;
+    }
+
+    try {
+        const res = await authFetch('/api/system/version');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (commitEl) commitEl.textContent = data.current_commit || '--';
+        if (branchEl) branchEl.textContent = data.branch || 'main';
+        if (remoteEl) remoteEl.textContent = data.remote_commit || '--';
+
+        if (badge) {
+            if (data.auto_update_enabled) {
+                badge.className = 'badge badge-emerald';
+                badge.innerHTML = '<i class="fa-solid fa-rotate"></i> Auto-Polling: Aktif (2m)';
+            } else {
+                badge.className = 'badge badge-rose';
+                badge.innerHTML = '<i class="fa-solid fa-pause"></i> Auto-Polling: Nonaktif';
+            }
+        }
+
+        if (alertBox) {
+            if (data.has_update) {
+                alertBox.classList.remove('hidden');
+                if (alertMsg) {
+                    alertMsg.textContent = `Pembaruan tersedia di GitHub (${data.current_commit} → ${data.remote_commit})!`;
+                }
+                if (showNotification) {
+                    showToast(`Pembaruan tersedia di GitHub (${data.current_commit} → ${data.remote_commit})!`);
+                }
+            } else {
+                alertBox.classList.add('hidden');
+                if (showNotification) {
+                    showToast('Codebase server Anda sudah pada versi GitHub terbaru!');
+                }
+            }
+        }
+    } catch (e) {
+        console.error('fetchSystemVersion error:', e);
+    }
+}
+
+async function checkSystemUpdate() {
+    const btn = document.getElementById('btn-check-vps-update');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...';
+    }
+    await fetchSystemVersion(true);
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Periksa Pembaruan GitHub';
+    }
+}
+
+async function triggerManualUpdate() {
+    if (!confirm('Perbarui DeepSeek4Free ke commit GitHub terbaru dan restart server sekarang?')) {
+        return;
+    }
+
+    const btn = document.getElementById('btn-trigger-vps-update');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengupdate...';
+    }
+
+    try {
+        const res = await authFetch('/api/system/update', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'ok') {
+            showToast(data.message || 'Pembaruan berhasil! Me-restart server...', 'success');
+            setTimeout(() => {
+                showToast('Memuat ulang dashboard...', 'success');
+                setTimeout(() => location.reload(), 2000);
+            }, 3000);
+        } else {
+            showToast(data.message || 'Gagal melakukan pembaruan', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Tarik & Pasang Versi Terbaru';
+            }
+        }
+    } catch (e) {
+        showToast('Pembaruan terkirim. Server sedang me-restart, memuat ulang...', 'success');
+        setTimeout(() => location.reload(), 4000);
+    }
+}
+

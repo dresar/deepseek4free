@@ -15,7 +15,14 @@ if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 from typing import Optional, List
-from auto_updater import start_auto_updater
+from auto_updater import (
+    start_auto_updater,
+    check_for_update,
+    execute_update_pipeline,
+    verify_github_signature,
+    UPDATE_BRANCH,
+    GITHUB_WEBHOOK_SECRET
+)
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, StreamingResponse, PlainTextResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -544,6 +551,64 @@ async def export_tokens(_: str = Depends(require_auth)):
         content,
         headers={"Content-Disposition": "attachment; filename=tokens.txt"}
     )
+
+
+@app.post("/api/webhook/github")
+async def github_webhook(request: Request):
+    """
+    GitHub Webhook receiver for continuous deployment on push events.
+    Automatically fetches latest commit, updates dependencies, and restarts server.
+    """
+    body_bytes = await request.body()
+    sig_header = request.headers.get("X-Hub-Signature-256") or request.headers.get("x-hub-signature-256")
+    
+    # Verify HMAC signature if secret configured
+    if GITHUB_WEBHOOK_SECRET and not verify_github_signature(body_bytes, sig_header):
+        raise HTTPException(status_code=403, detail="Invalid GitHub webhook signature")
+
+    event_type = request.headers.get("X-GitHub-Event", "push")
+    if event_type == "ping":
+        return {"status": "ok", "message": "Pong! GitHub webhook connection verified."}
+
+    if event_type != "push":
+        return {"status": "ignored", "message": f"Event type '{event_type}' ignored"}
+
+    try:
+        payload = json.loads(body_bytes.decode("utf-8"))
+    except Exception:
+        payload = {}
+
+    ref = payload.get("ref", "")
+    target_ref = f"refs/heads/{UPDATE_BRANCH}"
+    if ref and ref != target_ref:
+        return {"status": "ignored", "message": f"Push to branch '{ref}' ignored (watching '{target_ref}')"}
+
+    head_commit = payload.get("head_commit", {})
+    commit_id = head_commit.get("id", "")[:8] if head_commit else "unknown"
+    commit_msg = head_commit.get("message", "").split("\n")[0] if head_commit else ""
+
+    # Launch update pipeline asynchronously
+    import threading
+    threading.Thread(target=execute_update_pipeline, args=(UPDATE_BRANCH,), daemon=True).start()
+
+    return {
+        "status": "ok",
+        "message": f"Pembaruan otomatis dipicu untuk commit {commit_id}: '{commit_msg}'",
+        "branch": UPDATE_BRANCH,
+        "commit": commit_id
+    }
+
+
+@app.get("/api/system/version")
+async def get_system_version(_: str = Depends(require_auth)):
+    return check_for_update()
+
+
+@app.post("/api/system/update")
+async def trigger_manual_update(_: str = Depends(require_auth)):
+    result = execute_update_pipeline(UPDATE_BRANCH)
+    return result
+
 
 
 
