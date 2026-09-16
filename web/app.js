@@ -548,18 +548,20 @@ async function toggleApiKey(keyId, active) {
 // ==========================================================================
 // Skills & AI Personas Manager
 // ==========================================================================
+let allLoadedSkills = [];
+
 async function fetchSkills() {
     try {
         const res = await authFetch('/api/skills');
         if (!res.ok) return;
         const data = await res.json();
-        const skills = data.skills || [];
+        allLoadedSkills = data.skills || [];
         const badge = document.getElementById('badge-skills');
         if (badge) {
-            badge.textContent = skills.filter(s => s.is_active).length;
+            badge.textContent = allLoadedSkills.filter(s => s.is_active).length;
             badge.style.display = 'inline-block';
         }
-        renderSkillsGrid(skills);
+        renderSkillsGrid(allLoadedSkills);
     } catch {}
 }
 
@@ -585,11 +587,11 @@ function renderSkillsGrid(skills) {
             iconHtml = `<span>${escapeHtml(s.icon)}</span>`;
         }
 
-        const deleteBtn = isBuiltin ? '' : `
-            <button onclick="deleteSkill('${s.id}', '${escapeHtml(s.name)}')" class="btn-danger-ghost btn-sm" title="Hapus Skill">
-                <i class="fa-solid fa-trash-can"></i>
+        const filesBtn = (s.file_count && s.file_count > 1) ? `
+            <button onclick="openSkillFilesModal('${s.id}')" class="btn-secondary btn-sm" title="Lihat ${s.file_count} File Referensi">
+                <i class="fa-regular fa-folder-open" style="color:var(--accent-purple)"></i> ${s.file_count} File
             </button>
-        `;
+        ` : '';
 
         return `
             <div class="skill-card ${activeClass}" id="skill-card-${s.id}">
@@ -601,9 +603,12 @@ function renderSkillsGrid(skills) {
                             <span class="badge-tag ${badgeClass}">${badgeLabel}</span>
                         </div>
                         <div class="skill-desc">${escapeHtml(s.description)}</div>
-                        <button onclick="togglePromptPreview('${s.id}')" class="skill-prompt-toggle">
-                            <i class="fa-solid fa-eye" style="font-size:10px"></i> Intip Prompt
-                        </button>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+                            <button onclick="togglePromptPreview('${s.id}')" class="skill-prompt-toggle" style="margin-top:0">
+                                <i class="fa-solid fa-eye" style="font-size:10px"></i> Intip Prompt
+                            </button>
+                            ${filesBtn}
+                        </div>
                         <div id="skill-prompt-${s.id}" class="skill-prompt-body">${escapeHtml(s.system_prompt)}</div>
                     </div>
                 </div>
@@ -617,7 +622,14 @@ function renderSkillsGrid(skills) {
                             ${s.is_active ? 'Aktif' : 'Nonaktif'}
                         </span>
                     </div>
-                    ${deleteBtn}
+                    <div style="display:inline-flex;align-items:center;gap:6px">
+                        <button onclick="openModalEditSkill('${s.id}')" class="btn-secondary btn-sm" title="Edit Skill & Prompt">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
+                        <button onclick="deleteSkill('${s.id}', '${escapeHtml(s.name)}')" class="btn-danger-ghost btn-sm" title="Hapus Skill">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -632,6 +644,9 @@ function togglePromptPreview(skillId) {
 
 function openModalInstallSkill() {
     document.getElementById('modal-install-skill').classList.remove('hidden');
+    document.getElementById('input-skill-name').value = '';
+    document.getElementById('input-skill-desc').value = '';
+    document.getElementById('input-skill-prompt').value = '';
     document.getElementById('input-skill-name').focus();
 }
 
@@ -667,9 +682,6 @@ async function submitInstallSkill() {
         if (res.ok) {
             showToast(`Skill "${name}" berhasil dipasang dan diaktifkan!`);
             closeModalInstallSkill();
-            document.getElementById('input-skill-name').value = '';
-            document.getElementById('input-skill-desc').value = '';
-            document.getElementById('input-skill-prompt').value = '';
             await fetchSkills();
         } else {
             const err = await res.json();
@@ -681,6 +693,130 @@ async function submitInstallSkill() {
         btn.disabled = false;
         btn.textContent = 'Pasang Skill';
     }
+}
+
+function openModalEditSkill(skillId) {
+    const skill = allLoadedSkills.find(s => s.id === skillId);
+    if (!skill) return;
+    document.getElementById('edit-skill-id').value = skill.id;
+    document.getElementById('edit-skill-name').value = skill.name || '';
+    document.getElementById('edit-skill-icon').value = skill.icon || 'fa-solid fa-wand-magic-sparkles';
+    document.getElementById('edit-skill-desc').value = skill.description || '';
+    document.getElementById('edit-skill-prompt').value = skill.system_prompt || '';
+    document.getElementById('modal-edit-skill').classList.remove('hidden');
+    document.getElementById('edit-skill-name').focus();
+}
+
+function closeModalEditSkill() {
+    document.getElementById('modal-edit-skill').classList.add('hidden');
+}
+
+async function submitEditSkill() {
+    const skillId = document.getElementById('edit-skill-id').value;
+    const name = document.getElementById('edit-skill-name').value.trim();
+    const icon = document.getElementById('edit-skill-icon').value.trim();
+    const desc = document.getElementById('edit-skill-desc').value.trim();
+    const prompt = document.getElementById('edit-skill-prompt').value.trim();
+
+    if (!name || !prompt) {
+        showToast('Nama dan instruksi skill wajib diisi', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit-edit-skill');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Menyimpan...';
+
+    try {
+        const res = await authFetch(`/api/skills/${skillId}/update`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                icon,
+                description: desc,
+                system_prompt: prompt
+            })
+        });
+        if (res.ok) {
+            showToast(`Skill "${name}" berhasil diperbarui!`);
+            closeModalEditSkill();
+            await fetchSkills();
+        } else {
+            const err = await res.json();
+            showToast(err.detail || 'Gagal memperbarui skill', 'error');
+        }
+    } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan Perubahan';
+    }
+}
+
+async function openSkillFilesModal(skillId) {
+    const skill = allLoadedSkills.find(s => s.id === skillId);
+    if (!skill) return;
+    const modal = document.getElementById('modal-skill-files');
+    const title = document.getElementById('skill-files-title');
+    const listEl = document.getElementById('skill-files-list');
+    const viewerEl = document.getElementById('skill-file-content');
+    const fileNameEl = document.getElementById('skill-file-viewing-name');
+
+    title.innerHTML = `<i class="fa-regular fa-folder-open color-purple"></i> File & Referensi: ${escapeHtml(skill.name)}`;
+    listEl.innerHTML = '<div style="padding:10px;color:var(--text-muted)">Memuat file...</div>';
+    viewerEl.textContent = 'Pilih file dari daftar di sebelah kiri untuk melihat isinya.';
+    fileNameEl.textContent = 'Preview File';
+    modal.classList.remove('hidden');
+
+    try {
+        const res = await authFetch(`/api/skills/${skillId}/files`);
+        const data = await res.json();
+        const files = data.files || [];
+        if (files.length === 0) {
+            listEl.innerHTML = '<div style="padding:10px;color:var(--text-muted)">Tidak ada file dalam skill ini.</div>';
+            return;
+        }
+
+        listEl.innerHTML = files.map(f => `
+            <div class="skill-file-item" onclick="loadSkillFileContent('${skillId}', '${escapeHtml(f)}', this)">
+                <i class="fa-regular ${f.endsWith('.py') ? 'fa-file-code' : 'fa-file-lines'}" style="color:var(--accent-sky)"></i>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${escapeHtml(f)}</span>
+            </div>
+        `).join('');
+
+        if (files.length > 0) {
+            const firstItem = listEl.querySelector('.skill-file-item');
+            loadSkillFileContent(skillId, files[0], firstItem);
+        }
+    } catch (e) {
+        listEl.innerHTML = `<div style="padding:10px;color:var(--accent-rose)">Gagal: ${e.message}</div>`;
+    }
+}
+
+async function loadSkillFileContent(skillId, filePath, el) {
+    document.querySelectorAll('.skill-file-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const viewerEl = document.getElementById('skill-file-content');
+    const fileNameEl = document.getElementById('skill-file-viewing-name');
+    fileNameEl.textContent = filePath;
+    viewerEl.textContent = 'Memuat isi file...';
+
+    try {
+        const res = await authFetch(`/api/skills/${skillId}/files?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        if (data.file && data.file.content !== undefined) {
+            viewerEl.textContent = data.file.content;
+        } else {
+            viewerEl.textContent = 'File kosong atau tidak dapat dibaca.';
+        }
+    } catch (e) {
+        viewerEl.textContent = 'Gagal memuat isi file: ' + e.message;
+    }
+}
+
+function closeModalSkillFiles() {
+    document.getElementById('modal-skill-files').classList.add('hidden');
 }
 
 async function toggleSkill(skillId, isActive) {
@@ -697,13 +833,18 @@ async function toggleSkill(skillId, isActive) {
 }
 
 async function deleteSkill(skillId, name) {
-    if (!confirm(`Hapus skill "${name}"?`)) return;
+    if (!confirm(`Hapus skill "${name}"? Tindakan ini akan menghapus skill dan file SKILL.md terkait.`)) return;
     try {
-        await authFetch(`/api/skills/${skillId}`, { method: 'DELETE' });
-        showToast('Skill dihapus');
-        await fetchSkills();
+        const res = await authFetch(`/api/skills/${skillId}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast(`Skill "${name}" berhasil dihapus`);
+            await fetchSkills();
+        } else {
+            const err = await res.json();
+            showToast(err.detail || 'Gagal menghapus skill', 'error');
+        }
     } catch (e) {
-        showToast('Gagal menghapus skill', 'error');
+        showToast('Gagal menghapus: ' + e.message, 'error');
     }
 }
 

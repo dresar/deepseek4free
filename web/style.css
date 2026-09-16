@@ -1348,3 +1348,26 @@ input:checked + .slider:before {
   border: 1px solid rgba(192, 132, 252, 0.2);
 }
 
+.skill-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+}
+
+.skill-file-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.skill-file-item.active {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-sky);
+  font-weight: 600;
+}
+
+

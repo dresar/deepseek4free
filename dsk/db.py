@@ -6,6 +6,14 @@ import threading
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
+import re
+
+def slugify(text: str) -> str:
+    text = str(text or "").lower().strip()
+    text = re.sub(r'[^\w\s-]', '', text)
+    return re.sub(r'[-\s]+', '-', text).strip('-')
+
+
 class JSONDatabase:
     def __init__(self, db_path: Optional[str] = None):
         self._lock = threading.Lock()
@@ -15,6 +23,7 @@ class JSONDatabase:
             base_dir = Path(__file__).parent.parent.resolve()
             self.db_path = base_dir / "data" / "database.json"
         
+        self.base_dir = self.db_path.parent.parent.resolve()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._data: Dict[str, Any] = self._load()
 
@@ -345,28 +354,176 @@ class JSONDatabase:
             return False
 
     # ------------------ Skills Management ------------------
+    def _parse_skill_file(self, skill_md_path: Path) -> Dict[str, Any]:
+        try:
+            content = skill_md_path.read_text(encoding="utf-8")
+        except Exception:
+            return {}
+
+        meta = {}
+        body = content
+        if content.startswith("---"):
+            parts = content.split("---", 2)
+            if len(parts) >= 3:
+                frontmatter = parts[1]
+                body = parts[2].strip()
+                for line in frontmatter.splitlines():
+                    if ":" in line:
+                        k, v = line.split(":", 1)
+                        meta[k.strip()] = v.strip().strip('"').strip("'")
+        meta["system_prompt"] = body
+        return meta
+
     def get_skills(self) -> List[Dict[str, Any]]:
         with self._lock:
-            return list(self._data.get("skills", []))
+            skills = self._data.setdefault("skills", [])
+            skills_dir = self.base_dir / "skills"
+            skills_dir.mkdir(parents=True, exist_ok=True)
+
+            existing_folders = set()
+            for s in skills:
+                if not s.get("slug"):
+                    if s.get("id") == "skill_anti_slop":
+                        s["slug"] = "anti-slop-writing"
+                    elif s.get("id") == "skill_architect":
+                        s["slug"] = "senior-full-stack-architect"
+                    elif s.get("id") == "skill_researcher":
+                        s["slug"] = "deep-web-fact-researcher"
+                    elif s.get("id") == "skill_devops":
+                        s["slug"] = "devops-linux-sysadmin"
+                    elif s.get("id") == "skill_compact":
+                        s["slug"] = "zero-fluff-concise"
+                    else:
+                        s["slug"] = slugify(s.get("name", ""))
+
+                slug = s["slug"]
+                folder_path = skills_dir / slug
+                if folder_path.exists() and folder_path.is_dir():
+                    s["folder"] = slug
+                    existing_folders.add(slug)
+                    files_list = []
+                    for f in folder_path.rglob("*"):
+                        if f.is_file():
+                            files_list.append(str(f.relative_to(folder_path)).replace("\\", "/"))
+                    s["files"] = sorted(files_list)
+                    s["file_count"] = len(files_list)
+                else:
+                    s["files"] = []
+                    s["file_count"] = 0
+
+            # Auto-discover any folder in skills/ not yet in DB
+            import secrets
+            for sub in skills_dir.iterdir():
+                if sub.is_dir() and sub.name not in existing_folders:
+                    skill_md = sub / "SKILL.md"
+                    if not skill_md.exists():
+                        skill_md = sub / "README.md"
+
+                    parsed = self._parse_skill_file(skill_md) if skill_md.exists() else {}
+                    name = parsed.get("name") or sub.name.replace("-", " ").title()
+                    icon = parsed.get("icon") or "fa-solid fa-wand-magic-sparkles"
+                    desc = parsed.get("description") or f"Skill dari folder {sub.name}"
+                    prompt = parsed.get("system_prompt") or f"Instruksi skill {name}"
+
+                    files_list = []
+                    for f in sub.rglob("*"):
+                        if f.is_file():
+                            files_list.append(str(f.relative_to(sub)).replace("\\", "/"))
+
+                    new_item = {
+                        "id": f"skill_{secrets.token_hex(4)}",
+                        "name": name,
+                        "slug": sub.name,
+                        "folder": sub.name,
+                        "icon": icon,
+                        "description": desc,
+                        "system_prompt": prompt,
+                        "is_active": False,
+                        "is_builtin": False,
+                        "files": sorted(files_list),
+                        "file_count": len(files_list),
+                        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                    }
+                    skills.append(new_item)
+                    existing_folders.add(sub.name)
+
+            self._save_unlocked(self._data)
+            return list(skills)
 
     def install_skill(self, name: str, icon: str, description: str, system_prompt: str) -> Dict[str, Any]:
         import secrets
         with self._lock:
             skills = self._data.setdefault("skills", [])
             skill_id = f"skill_{secrets.token_hex(4)}"
+            slug = slugify(name) or f"skill-{secrets.token_hex(3)}"
+
+            skills_dir = self.base_dir / "skills" / slug
+            skills_dir.mkdir(parents=True, exist_ok=True)
+            skill_md = skills_dir / "SKILL.md"
+            content = f"---\nname: {name.strip()}\nicon: {icon.strip()}\ndescription: {description.strip()}\n---\n\n{system_prompt.strip()}\n"
+            try:
+                skill_md.write_text(content, encoding="utf-8")
+            except Exception:
+                pass
+
             item = {
                 "id": skill_id,
                 "name": name.strip(),
+                "slug": slug,
+                "folder": slug,
                 "icon": icon.strip() or "fa-solid fa-wand-magic-sparkles",
                 "description": description.strip(),
                 "system_prompt": system_prompt.strip(),
                 "is_active": True,
                 "is_builtin": False,
+                "files": ["SKILL.md"],
+                "file_count": 1,
                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             }
             skills.append(item)
             self._save_unlocked(self._data)
             return item
+
+    def update_skill(
+        self,
+        skill_id: str,
+        name: str,
+        icon: str,
+        description: str,
+        system_prompt: str
+    ) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            skills = self._data.setdefault("skills", [])
+            skill = next((s for s in skills if s["id"] == skill_id), None)
+            if not skill:
+                return None
+
+            skill["name"] = name.strip()
+            skill["icon"] = icon.strip() or "fa-solid fa-wand-magic-sparkles"
+            skill["description"] = description.strip()
+            skill["system_prompt"] = system_prompt.strip()
+
+            slug = skill.get("slug") or slugify(skill["name"])
+            skill["slug"] = slug
+            skills_dir = self.base_dir / "skills" / slug
+            skills_dir.mkdir(parents=True, exist_ok=True)
+            skill_md = skills_dir / "SKILL.md"
+            content = f"---\nname: {skill['name']}\nicon: {skill['icon']}\ndescription: {skill['description']}\n---\n\n{skill['system_prompt']}\n"
+            try:
+                skill_md.write_text(content, encoding="utf-8")
+            except Exception:
+                pass
+
+            files_list = []
+            for f in skills_dir.rglob("*"):
+                if f.is_file():
+                    files_list.append(str(f.relative_to(skills_dir)).replace("\\", "/"))
+            skill["files"] = sorted(files_list)
+            skill["file_count"] = len(files_list)
+            skill["folder"] = slug
+
+            self._save_unlocked(self._data)
+            return skill
 
     def toggle_skill(self, skill_id: str, is_active: bool) -> bool:
         with self._lock:
@@ -380,15 +537,49 @@ class JSONDatabase:
                 self._save_unlocked(self._data)
             return found
 
-    def delete_skill(self, skill_id: str) -> bool:
+    def delete_skill(self, skill_id: str, remove_files: bool = True) -> bool:
         with self._lock:
             skills = self._data.setdefault("skills", [])
-            initial_len = len(skills)
+            skill = next((s for s in skills if s["id"] == skill_id), None)
+            if not skill:
+                return False
+
+            slug = skill.get("slug") or skill.get("folder")
+            if remove_files and slug:
+                import shutil
+                skill_dir = self.base_dir / "skills" / slug
+                if skill_dir.exists() and skill_dir.is_dir():
+                    try:
+                        shutil.rmtree(skill_dir)
+                    except Exception:
+                        pass
+
             self._data["skills"] = [s for s in skills if s["id"] != skill_id]
-            changed = len(self._data["skills"]) != initial_len
-            if changed:
-                self._save_unlocked(self._data)
-            return changed
+            self._save_unlocked(self._data)
+            return True
+
+    def get_skill_file(self, skill_id: str, rel_path: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            skills = self._data.setdefault("skills", [])
+            skill = next((s for s in skills if s["id"] == skill_id), None)
+            if not skill:
+                return None
+            slug = skill.get("slug") or skill.get("folder")
+            if not slug:
+                return None
+            target = (self.base_dir / "skills" / slug / rel_path).resolve()
+            base = (self.base_dir / "skills" / slug).resolve()
+            if not str(target).startswith(str(base)) or not target.exists() or not target.is_file():
+                return None
+            try:
+                content = target.read_text(encoding="utf-8", errors="replace")
+                return {
+                    "path": rel_path,
+                    "content": content,
+                    "size": target.stat().st_size
+                }
+            except Exception as e:
+                return {"error": str(e)}
 
     def get_active_skills_prompt(self) -> str:
         with self._lock:

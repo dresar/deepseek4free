@@ -168,6 +168,13 @@ class InstallSkillRequest(BaseModel):
     system_prompt: str
 
 
+class UpdateSkillRequest(BaseModel):
+    name: str
+    icon: Optional[str] = "fa-solid fa-wand-magic-sparkles"
+    description: Optional[str] = ""
+    system_prompt: str
+
+
 class ToggleSkillRequest(BaseModel):
     is_active: bool
 
@@ -456,6 +463,35 @@ async def toggle_skill_active(skill_id: str, req: ToggleSkillRequest, _: str = D
 async def delete_skill(skill_id: str, _: str = Depends(require_auth)):
     deleted = db.delete_skill(skill_id)
     return {"status": "ok", "deleted": deleted}
+
+
+@app.post("/api/skills/{skill_id}/update")
+@app.put("/api/skills/{skill_id}")
+async def update_skill_endpoint(skill_id: str, req: UpdateSkillRequest, _: str = Depends(require_auth)):
+    updated = db.update_skill(
+        skill_id=skill_id,
+        name=req.name,
+        icon=req.icon or "fa-solid fa-wand-magic-sparkles",
+        description=req.description or "",
+        system_prompt=req.system_prompt
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Skill tidak ditemukan")
+    return {"status": "ok", "skill": updated}
+
+
+@app.get("/api/skills/{skill_id}/files")
+async def get_skill_files(skill_id: str, path: Optional[str] = None, _: str = Depends(require_auth)):
+    if path:
+        file_data = db.get_skill_file(skill_id, path)
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File tidak ditemukan")
+        return {"status": "ok", "file": file_data}
+    skills = db.get_skills()
+    skill = next((s for s in skills if s["id"] == skill_id), None)
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill tidak ditemukan")
+    return {"status": "ok", "files": skill.get("files", []), "folder": skill.get("folder")}
 
 
 @app.post("/api/learn")

@@ -663,6 +663,64 @@ for chunk in response:
   </div>
 </div>
 
+<!-- MODAL: EDIT SKILL -->
+<div id="modal-edit-skill" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:640px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-pen-to-square color-sky"></i> Edit Skill & Instruksi</div>
+      <button onclick="closeModalEditSkill()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-skill-id">
+      <div class="form-group">
+        <label class="form-label">Nama Skill</label>
+        <input type="text" id="edit-skill-name" class="form-input" placeholder="Nama skill">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon (FontAwesome Class atau Emoji)</label>
+        <input type="text" id="edit-skill-icon" class="form-input" placeholder="fa-solid fa-code">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi Singkat</label>
+        <input type="text" id="edit-skill-desc" class="form-input" placeholder="Deskripsi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">System Prompt / Markdown Instructions (Tersimpan ke file SKILL.md)</label>
+        <textarea id="edit-skill-prompt" class="form-textarea" rows="10" placeholder="Tulis instruksi persona dan gaya kerja AI di sini..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalEditSkill()" class="btn-secondary">Batal</button>
+      <button id="btn-submit-edit-skill" onclick="submitEditSkill()" class="btn-primary">Simpan Perubahan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VIEW SKILL FILES & REFERENCES -->
+<div id="modal-skill-files" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:850px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title" id="skill-files-title"><i class="fa-regular fa-folder-open color-purple"></i> File & Referensi Skill</div>
+      <button onclick="closeModalSkillFiles()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="padding:14px">
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:360px">
+        <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:8px;max-height:420px;overflow-y:auto">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;padding:0 4px">Daftar File</div>
+          <div id="skill-files-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <div id="skill-file-viewing-name" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-sky);margin-bottom:6px;font-weight:600">Preview</div>
+          <pre id="skill-file-content" style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-secondary);flex:1;max-height:390px;overflow:auto;white-space:pre-wrap;line-height:1.5"></pre>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModalSkillFiles()" class="btn-secondary">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-change-pass" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-header">
