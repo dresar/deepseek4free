@@ -8,16 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ready = await initApp();
     if (!ready) return;
 
-    const baseV1 = window.location.origin + '/v1';
-    const baseAnthropic = window.location.origin + '/anthropic/v1';
-
-    const setContent = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = val;
-    };
-    setContent('api-base-url', baseV1);
-    setContent('api-base-url-keys', baseV1);
-    setContent('api-anthropic-url-keys', baseAnthropic);
+    updateDynamicEndpoints();
 
     setupToggleChips();
     setupKeyboardShortcuts();
@@ -80,9 +71,10 @@ function switchTab(tab) {
     });
 
     if (tab === 'pool') fetchPoolStatus();
-    if (tab === 'keys') fetchApiKeys();
+    if (tab === 'keys') { fetchApiKeys(); updateDynamicEndpoints(); }
     if (tab === 'skills') fetchSkills();
-    if (tab === 'settings') fetchSystemVersion();
+    if (tab === 'docs') updateDynamicEndpoints();
+    if (tab === 'settings') { fetchSystemVersion(); updateDynamicEndpoints(); }
 }
 
 function showToast(message, type = 'success') {
@@ -122,6 +114,93 @@ async function copyToClipboard(text, msg = 'Berhasil disalin ke clipboard!') {
     }
 }
 window.copyToClipboard = copyToClipboard;
+
+function copyDynamicCode(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    copyToClipboard(el.textContent.trim(), 'Kode berhasil disalin ke clipboard!');
+}
+window.copyDynamicCode = copyDynamicCode;
+
+function updateDynamicEndpoints() {
+    const origin = window.location.origin;
+    const baseV1 = origin + '/v1';
+    const baseAnthropic = origin + '/anthropic/v1';
+
+    const setContent = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+
+    setContent('api-base-url', baseV1);
+    setContent('api-base-url-keys', baseV1);
+    setContent('api-anthropic-url-keys', baseAnthropic);
+    setContent('doc-cursor-url', baseV1);
+
+    const docCurlOpenAi = document.getElementById('doc-curl-openai-code');
+    if (docCurlOpenAi) {
+        docCurlOpenAi.textContent = `curl -X POST ${baseV1}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer sk-deepseek4free" \\
+  -d '{
+    "model": "deepseek-reasoner",
+    "messages": [
+      {"role": "user", "content": "Halo DeepSeek R1!"}
+    ],
+    "stream": true
+  }'`;
+    }
+
+    const docCurlAnthropic = document.getElementById('doc-curl-claude-code');
+    if (docCurlAnthropic) {
+        docCurlAnthropic.textContent = `curl -X POST ${baseAnthropic}/messages \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: sk-deepseek4free" \\
+  -H "anthropic-version: 2023-06-01" \\
+  -d '{
+    "model": "deepseek-reasoner",
+    "messages": [
+      {"role": "user", "content": "Halo dari Claude API format!"}
+    ],
+    "max_tokens": 4096,
+    "stream": true
+  }'`;
+    }
+
+    const doc9Router = document.getElementById('doc-9router-config');
+    if (doc9Router) {
+        doc9Router.textContent = `{
+  "provider": "openai",
+  "name": "deepseek4free-r1",
+  "baseUrl": "${baseV1}",
+  "apiKey": "sk-deepseek4free",
+  "model": "deepseek-reasoner",
+  "priority": 1,
+  "weight": 100
+}`;
+    }
+
+    const docPython = document.getElementById('doc-python-sdk-code');
+    if (docPython) {
+        docPython.textContent = `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${baseV1}",
+    api_key="sk-deepseek4free"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[{"role": "user", "content": "Jelaskan cara kerja multi-account pool."}],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)`;
+    }
+}
+window.updateDynamicEndpoints = updateDynamicEndpoints;
 
 function toggleTokenMask(index, fullToken, maskedName) {
     const span = document.getElementById(`token-disp-${index}`);

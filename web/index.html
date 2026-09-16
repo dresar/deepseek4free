@@ -277,7 +277,7 @@
             <div class="api-row">
               <div>
                 <div class="api-key-label">Base URL (OpenAI / Cursor / Cline)</div>
-                <div class="api-key-value" id="api-base-url-keys">http://localhost:8990/v1</div>
+                <div class="api-key-value" id="api-base-url-keys">/v1</div>
               </div>
               <button onclick="copyToClipboard(document.getElementById('api-base-url-keys').textContent)" class="btn-copy">Salin</button>
             </div>
@@ -285,7 +285,7 @@
             <div class="api-row">
               <div>
                 <div class="api-key-label">Base URL (Claude / Anthropic)</div>
-                <div class="api-key-value" id="api-anthropic-url-keys">http://localhost:8990/anthropic/v1</div>
+                <div class="api-key-value" id="api-anthropic-url-keys">/anthropic/v1</div>
               </div>
               <button onclick="copyToClipboard(document.getElementById('api-anthropic-url-keys').textContent)" class="btn-copy">Salin</button>
             </div>
@@ -365,11 +365,11 @@
               <div class="panel-title" style="font-size:13px">
                 <i class="fa-solid fa-network-wired color-emerald"></i> 1. OpenAI-Compatible API (/v1/chat/completions)
               </div>
-              <button onclick="copyToClipboard(`curl -X POST http://localhost:8990/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer sk-deepseek4free' -d '{\n  \"model\": \"deepseek-reasoner\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Halo DeepSeek R1!\"}],\n  \"stream\": true\n}'`)" class="btn-copy">Salin cURL</button>
+              <button onclick="copyDynamicCode('doc-curl-openai-code')" class="btn-copy">Salin cURL</button>
             </div>
             <div style="padding:14px">
               <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Endpoint standar OpenAI. Cocok untuk Cursor, Cline, Roo Code, LibreChat, dan 9Router:</p>
-              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code>curl -X POST http://localhost:8990/v1/chat/completions \
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code id="doc-curl-openai-code">curl -X POST /v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-deepseek4free" \
   -d '{
@@ -388,11 +388,11 @@
               <div class="panel-title" style="font-size:13px">
                 <i class="fa-solid fa-brain color-purple"></i> 2. Anthropic / Claude Messages API (/anthropic/v1/messages)
               </div>
-              <button onclick="copyToClipboard(`curl -X POST http://localhost:8990/anthropic/v1/messages -H 'Content-Type: application/json' -H 'x-api-key: sk-deepseek4free' -H 'anthropic-version: 2023-06-01' -d '{\n  \"model\": \"deepseek-reasoner\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Halo dari Claude API format!\"}],\n  \"max_tokens\": 4096,\n  \"stream\": true\n}'`)" class="btn-copy">Salin cURL</button>
+              <button onclick="copyDynamicCode('doc-curl-claude-code')" class="btn-copy">Salin cURL</button>
             </div>
             <div style="padding:14px">
               <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Mendukung format pesan Anthropic Claude (header <code>x-api-key</code> atau <code>Authorization: Bearer</code>):</p>
-              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-purple);overflow-x:auto;border:1px solid var(--border)"><code>curl -X POST http://localhost:8990/anthropic/v1/messages \
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-purple);overflow-x:auto;border:1px solid var(--border)"><code id="doc-curl-claude-code">curl -X POST /anthropic/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: sk-deepseek4free" \
   -H "anthropic-version: 2023-06-01" \
@@ -413,6 +413,7 @@
               <div class="panel-title" style="font-size:13px">
                 <i class="fa-solid fa-route color-amber"></i> 3. Konfigurasi 9Router &amp; Cursor / Cline
               </div>
+              <button onclick="copyDynamicCode('doc-9router-config')" class="btn-copy">Salin JSON 9Router</button>
             </div>
             <div style="padding:14px;font-size:12px;color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
               <div>
@@ -420,7 +421,7 @@
                 <ol style="margin-left:18px;margin-top:4px;line-height:1.6">
                   <li>Buka Settings di Cursor &rarr; <b>Models</b>.</li>
                   <li>Di bagian <b>OpenAI API Key</b>, masukkan <code>sk-deepseek4free</code>.</li>
-                  <li>Aktifkan <b>Override OpenAI Base URL</b> dan isi dengan: <code>http://localhost:8990/v1</code></li>
+                  <li>Aktifkan <b>Override OpenAI Base URL</b> dan isi dengan: <code id="doc-cursor-url">/v1</code></li>
                   <li>Tambahkan model baru bernama: <code>deepseek-reasoner</code> dan jadikan default.</li>
                 </ol>
               </div>
@@ -428,10 +429,10 @@
               <div>
                 <strong style="color:var(--text-primary)">Integrasi ke 9Router Combo Fallback:</strong>
                 <p style="margin-top:4px;color:var(--text-muted)">Tambahkan node DeepSeek4Free ke konfigurasi 9Router sebagai primary reasoner:</p>
-                <pre style="background:var(--bg-input);padding:10px;border-radius:var(--radius-md);margin-top:6px;font-size:11.5px;color:var(--accent-amber)"><code>{
+                <pre style="background:var(--bg-input);padding:10px;border-radius:var(--radius-md);margin-top:6px;font-size:11.5px;color:var(--accent-amber)"><code id="doc-9router-config">{
   "provider": "openai",
   "name": "deepseek4free-r1",
-  "baseUrl": "http://localhost:8990/v1",
+  "baseUrl": "/v1",
   "apiKey": "sk-deepseek4free",
   "model": "deepseek-reasoner",
   "priority": 1,
@@ -447,13 +448,13 @@
               <div class="panel-title" style="font-size:13px">
                 <i class="fa-brands fa-python color-sky"></i> 4. Contoh Pemanggilan Python (OpenAI SDK)
               </div>
-              <button onclick="copyToClipboard(`from openai import OpenAI\n\nclient = OpenAI(\n    base_url='http://localhost:8990/v1',\n    api_key='sk-deepseek4free'\n)\n\nresponse = client.chat.completions.create(\n    model='deepseek-reasoner',\n    messages=[{'role': 'user', 'content': 'Jelaskan cara kerja multi-account pool.'}],\n    stream=True\n)\n\nfor chunk in response:\n    if chunk.choices and chunk.choices[0].delta.content:\n        print(chunk.choices[0].delta.content, end='', flush=True)\n`)" class="btn-copy">Salin Python</button>
+              <button onclick="copyDynamicCode('doc-python-sdk-code')" class="btn-copy">Salin Python</button>
             </div>
             <div style="padding:14px">
-              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code>from openai import OpenAI
+              <pre style="background:var(--bg-input);padding:12px;border-radius:var(--radius-md);font-size:12px;color:var(--accent-sky);overflow-x:auto;border:1px solid var(--border)"><code id="doc-python-sdk-code">from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://localhost:8990/v1",
+    base_url="/v1",
     api_key="sk-deepseek4free"
 )
 
@@ -536,7 +537,7 @@ for chunk in response:
             <div class="api-row">
               <div>
                 <div class="api-key-label">Base URL</div>
-                <div class="api-key-value" id="api-base-url">http://localhost:8990/v1</div>
+                <div class="api-key-value" id="api-base-url">/v1</div>
               </div>
               <button onclick="copyToClipboard(document.getElementById('api-base-url').textContent)" class="btn-copy">Salin</button>
             </div>
